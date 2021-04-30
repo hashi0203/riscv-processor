@@ -4,7 +4,7 @@ CC := riscv32-unknown-linux-gnu-gcc
 LD := riscv32-unknown-linux-gnu-ld
 OBJCOPY := riscv32-unknown-linux-gnu-objcopy
 OBJDUMP := riscv32-unknown-linux-gnu-objdump
-CFLAGS := -march=rv32imac -c
+CFLAGS := -march=rv32ima -c
 LINK := -L/home/nhsmt1123/opt/riscv32/riscv32-unknown-gnu/lib
 
 main: fib.bin
