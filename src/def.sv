@@ -3,80 +3,80 @@
  `define _parameters_state_
 
 typedef struct {
-    // metadata
-    wire [4:0]  rd;
-    wire [4:0]  rs1;
-    wire [4:0]  rs2;
-    wire [31:0] imm;
-    wire [31:0] pc;
+	// metadata
+	reg [4:0]  rd;
+	reg [4:0]  rs1;
+	reg [4:0]  rs2;
+	reg [31:0] imm;
+	reg [31:0] pc;
 
-    // rv32i
-    wire        lui;
-    wire        auipc;
+	// rv32i
+	reg        lui;
+	reg        auipc;
 
-    wire        jal;
-    wire        jalr;
+	reg        jal;
+	reg        jalr;
 
-    wire        beq;
-    wire        bne;
-    wire        blt;
-    wire        bge;
-    wire        bltu;
-    wire        bgeu;
+	reg        beq;
+	reg        bne;
+	reg        blt;
+	reg        bge;
+	reg        bltu;
+	reg        bgeu;
 
-    wire        lb;
-    wire        lh;
-    wire        lw;
-    wire        lbu;
-    wire        lhu;
-    wire        sb;
-    wire        sh;
-    wire        sw;
+	reg        lb;
+	reg        lh;
+	reg        lw;
+	reg        lbu;
+	reg        lhu;
+	reg        sb;
+	reg        sh;
+	reg        sw;
 
-    wire        addi;
-    wire        slti;
-    wire        sltiu;
-    wire        xori;
-    wire        ori;
-    wire        andi;
-    wire        slli;
-    wire        srli;
-    wire        srai;
+	reg        addi;
+	reg        slti;
+	reg        sltiu;
+	reg        xori;
+	reg        ori;
+	reg        andi;
+	reg        slli;
+	reg        srli;
+	reg        srai;
 
-    wire        add;
-    wire        sub;
-    wire        sll;
-    wire        slt;
-    wire        sltu;
-    wire        xor;
-    wire        sra;
-    wire        or;
-    wire        and;
+	reg        add;
+	reg        sub;
+	reg        sll;
+	reg        slt;
+	reg        sltu;
+	reg        i_xor;
+	reg        sra;
+	reg        i_or;
+	reg        i_and;
 
-    wire        fence;
-    wire        fencei;
-    wire        ecall;
-    wire        ebreak;
-    wire        csrrw;
-    wire        csrrs;
-    wire        csrrc;
-    wire        csrrwi;
-    wire        csrrsi;
-    wire        csrrci;
+	reg        fence;
+	reg        fencei;
+	reg        ecall;
+	reg        ebreak;
+	reg        csrrw;
+	reg        csrrs;
+	reg        csrrc;
+	reg        csrrwi;
+	reg        csrrsi;
+	reg        csrrci;
 
-    // rv32m
-    wire        mul;
-    wire        mulh;
-    wire        mulhsu;
-    wire        div;
-    wire        divu;
-    wire        rem;
-    wire        remu;
+	// rv32m
+	reg        mul;
+	reg        mulh;
+	reg        mulhsu;
+	reg        div;
+	reg        divu;
+	reg        rem;
+	reg        remu;
 
-    // control flags
-    wire        is_store;
-    wire        is_load;
-    wire        is_conditional_jump;
-} instuctions;
+	// control flags
+	reg        is_store;
+	reg        is_load;
+	reg        is_conditional_jump;
+} instructions;
 
 `endif

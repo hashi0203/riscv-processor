@@ -1,7 +1,7 @@
 `default_nettype none
 `include "def.sv"
 
-module decoder
+module decode
   ( input  wire         clk,
     input  wire         rstn,
     input  wire [31:0]  pc,
@@ -35,12 +35,28 @@ module decoder
     // j, u, and i do not require rs2
     assign rs2 = (r_type || s_type || b_type) ? _rs2 : 5'b00000;
 
-    wire        _addi  = (instr_code[6:0] == 0110011);
+    wire        _addi  = (opcode == 7'b0110011);
 
-    assign instr.addi  = _addi;
-    assign instr.rs2   = _rs2;
-    assign instr.rs1   = _rs1;
-    assign instr.rd    = _rd;
+		reg         _completed;
+		assign completed = _completed & !enabled;
+
+    always @(posedge clk) begin
+      if (rstn) begin
+				if (enabled) begin
+					_completed <= 1;
+
+					instr.addi <= _addi;
+
+					instr.rd <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
+					instr.rs1 <= (r_type || i_type || s_type || b_type) ? _rs1 : 5'b00000;
+					instr.rs2 <= (r_type || s_type || b_type) ? _rs2 : 5'b00000;
+
+					instr.pc <= pc;
+				end
+			end else begin
+				_completed <= 0;
+			end
+    end
 
 endmodule
 
