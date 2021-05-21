@@ -49,6 +49,7 @@ typedef struct {
 	reg        slt;
 	reg        sltu;
 	reg        i_xor;
+	reg        srl;
 	reg        sra;
 	reg        i_or;
 	reg        i_and;
@@ -68,6 +69,7 @@ typedef struct {
 	reg        mul;
 	reg        mulh;
 	reg        mulhsu;
+	reg        mulhu;
 	reg        div;
 	reg        divu;
 	reg        rem;
