@@ -5,3 +5,6 @@
 *.pb
 *.vscode
 log
+*.bin
+*.o
+*.elf

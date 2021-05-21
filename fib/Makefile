@@ -7,8 +7,11 @@ OBJDUMP := riscv32-unknown-linux-gnu-objdump
 CFLAGS := -march=rv32ima -c
 LINK := -L/home/nhsmt1123/opt/riscv32/riscv32-unknown-gnu/lib
 
-main: fib.bin
-	hexdump -v -e '1/4 "%08x" "\n"' fib.bin > fib.hex
+main: fib.hex
+	./hex2bin.sh fib.hex > fib.b
+
+fib.hex: fib.bin
+	hexdump -v -e '1/4 "%08X" "\n"' fib.bin > fib.hex
 
 fib.bin: fib.elf
 	$(OBJCOPY) -O binary fib.elf fib.bin
@@ -26,4 +29,4 @@ disassem: fib.elf
 	$(OBJDUMP) -d fib.elf > fib.S
 
 clean:
-	$(RM) *.o *.out *.hex *.bin *.elf fib.S
+	$(RM) *.o *.out *.bin *.elf fib.S
