@@ -19,7 +19,9 @@ module execute
 		// output reg          frs1_out,
 		// output reg          frs2_out,
 
-		output wire [31:0]  rd );
+		output wire [31:0]  rd,
+		output wire         is_jump,
+		output wire [31:0]  jump_dest );
 
 		wire [31:0] alu_rd;
 		wire        alu_completed;
@@ -40,6 +42,11 @@ module execute
 
 		// assign rd = $signed(rs1) + $signed(rs2);
 		assign rd = alu_rd;
+		assign is_jump = instr_out.jal || instr_out.jalr || (instr_out.is_conditional_jump && alu_rd == 32'b1);
+		assign jump_dest = instr_out.jal  ? $signed(instr_out.pc) + $signed(instr_out.imm) :
+											 instr_out.jalr ? $signed(rs1) + $signed(instr_out.imm) :
+											 instr_out.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr_out.pc) + $signed(instr_out.imm) :
+											 instr_out.pc + 1;
 
 		always @(posedge clk) begin
 			if (rstn) begin

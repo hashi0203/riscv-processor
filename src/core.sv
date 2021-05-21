@@ -71,9 +71,11 @@ module core
 		reg [31:0] rs2_val;
 
 		instructions instr_em_out;
-		reg [31:0] rs1_em_out;
-		reg [31:0] rs2_em_out;
+		reg  [31:0] rs1_em_out;
+		reg  [31:0] rs2_em_out;
 		wire [31:0] rd_em_out;
+		wire        is_jump;
+		wire [31:0] jump_dest;
 
 		execute _execute
 			( .clk(clk),
@@ -93,7 +95,9 @@ module core
 				// .frs1_out,
 				// .frs2_out,
 
-				.rd(rd_em_out) );
+				.rd(rd_em_out),
+				.is_jump(is_jump),
+				.jump_dest(jump_dest) );
 
 
 		// write
@@ -216,6 +220,8 @@ module core
 						register[instr_em_out.rd] <= rd_em_out;
 						// register_out <= rd_em_out;
 						write_completed <= 1;
+
+						pc <= jump_dest;
 					end
 				end else if (state == 2'b11) begin
 					if (write_completed) begin
@@ -231,7 +237,7 @@ module core
 						execute_rstn <= 0;
 						write_rstn <= 0;
 
-						pc <= pc + 1;
+						// pc <= pc + 1;
 					end
 				end
 			end else begin
