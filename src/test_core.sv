@@ -19,16 +19,18 @@ module test_core();
       $display("difference message format");
 
       clk = 0;
-      for (i=0; i<100; i++) begin
+      for (i=0; i<300; i++) begin
         #10
         clk = ~clk;
-        $display("pc: %d", pc[5:0]);
-        $display("state: %d", state);
-        $display("register:");
-        for (r=0; r<8; r++) begin
-          $write("%d: %d, ", r, register[r][5:0]);
+        if (state == 0) begin
+          $display("pc: %d", pc[5:0]);
+          $display("state: %d", state);
+          $display("register:");
+          for (r=0; r<8; r++) begin
+            $write("%d: %d, ", r, register[r][5:0]);
+          end
+          $display("%d: %d", r, register[r][5:0]);
         end
-        $display("%d: %d", r, register[r][5:0]);
       end
 
       $display("end of checking module core");

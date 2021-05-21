@@ -121,7 +121,7 @@ module decode
                        s_type ? {_imm_pn, instr_raw[31:25], instr_raw[11:7]} :
                        b_type ? {_imm_pn[18:0], instr_raw[31], instr_raw[7], instr_raw[30:25], instr_raw[11:8], 1'b0} :
                        u_type ? {instr_raw[31:12], 12'b0} :
-                       j_type ? {_imm_pn[11:0], instr_raw[31], instr_raw[19:12], instr_raw[20], instr_raw[30:21], 1'b0} :
+                       j_type ? {_imm_pn[10:0], instr_raw[31], instr_raw[19:12], instr_raw[20], instr_raw[30:21], 1'b0} :
                        32'b0;
 					instr.pc <= pc;
 
