@@ -19,14 +19,27 @@ module execute
 		// output reg          frs1_out,
 		// output reg          frs2_out,
 
-		output wire [31:0]  result );
+		output wire [31:0]  rd );
+
+		wire [31:0] alu_rd;
+		wire        alu_completed;
+		alu _alu
+			( .clk(clk),
+				.rstn(rstn),
+				.enabled(enabled),
+				.instr(instr),
+				.rs1(rs1),
+				.rs2(rs2),
+				.completed(alu_completed),
+				.rd(alu_rd));
 
 		// wire _completed = ((instr_n.rv32f && fpu_completed)
 		// 										|| (!instr_n.rv32f && alu_completed));
 		wire _completed = 1;
 		assign completed = _completed & !enabled;
 
-		assign result = $signed(rs1) + $signed(rs2);
+		// assign rd = $signed(rs1) + $signed(rs2);
+		assign rd = alu_rd;
 
 		always @(posedge clk) begin
 			if (rstn) begin

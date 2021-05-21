@@ -107,7 +107,7 @@ module decode
 		reg  _completed;
 		assign completed = _completed & !enabled;
 
-    wire _imm_pn[19:0] = instr_raw[31] ? ~20'b0 : 20'b0;
+    wire [19:0] _imm_pn = instr_raw[31] ? ~20'b0 : 20'b0;
 
     always @(posedge clk) begin
       if (rstn) begin

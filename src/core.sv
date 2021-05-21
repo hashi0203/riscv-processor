@@ -73,7 +73,7 @@ module core
 		instructions instr_em_out;
 		reg [31:0] rs1_em_out;
 		reg [31:0] rs2_em_out;
-		wire [31:0] result_em_out;
+		wire [31:0] rd_em_out;
 
 		execute _execute
 			( .clk(clk),
@@ -93,7 +93,7 @@ module core
 				// .frs1_out,
 				// .frs2_out,
 
-				.result(result_em_out) );
+				.rd(rd_em_out) );
 
 
 		// write
@@ -213,8 +213,8 @@ module core
 						write_rstn <= 1;
 
 						// set_em_reg();
-						register[instr_em_out.rd] <= result_em_out;
-						// register_out <= result_em_out;
+						register[instr_em_out.rd] <= rd_em_out;
+						// register_out <= rd_em_out;
 						write_completed <= 1;
 					end
 				end else if (state == 2'b11) begin
