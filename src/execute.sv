@@ -43,9 +43,9 @@ module execute
 		// assign rd = $signed(rs1) + $signed(rs2);
 		assign rd = alu_rd;
 		assign is_jump = instr_out.jal || instr_out.jalr || (instr_out.is_conditional_jump && alu_rd == 32'b1);
-		assign jump_dest = instr_out.jal  ? $signed(instr_out.pc) + $signed(instr_out.imm) :
-											 instr_out.jalr ? $signed(rs1) + $signed(instr_out.imm) :
-											 instr_out.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr_out.pc) + $signed(instr_out.imm) :
+		assign jump_dest = instr_out.jal  ? $signed(instr_out.pc) + $signed($signed(instr_out.imm) >>> 2) :
+											 instr_out.jalr ? $signed(rs1) + $signed($signed(instr_out.imm) >>> 2) :
+											 instr_out.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr_out.pc) + $signed($signed(instr_out.imm) >>> 2) :
 											 instr_out.pc + 1;
 
 		always @(posedge clk) begin
