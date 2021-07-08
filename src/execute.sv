@@ -9,15 +9,11 @@ module execute
 		input  instructions instr,
 		input  reg [31:0]   rs1,
 		input  reg [31:0]   rs2,
-		// input   reg          frs1,
-		// input   reg          frs2,
 
 		output wire         completed,
 		output instructions instr_out,
-		output reg [31:0]   rs1_out,
-		output reg [31:0]   rs2_out,
-		// output reg          frs1_out,
-		// output reg          frs2_out,
+		// output reg [31:0]   rs1_out,
+		// output reg [31:0]   rs2_out,
 
 		output wire [31:0]  rd,
 		output wire         is_jump,
@@ -40,8 +36,19 @@ module execute
 		wire _completed = 1;
 		assign completed = _completed & !enabled;
 
-		// assign rd = $signed(rs1) + $signed(rs2);
-		assign rd = alu_rd;
+		reg [31:0] r_data;
+		memory _memory
+			( .clk(clk),
+				.rstn(rstn),
+				.base(rs1),
+				.offset(instr.imm),
+
+				.r_enabled(instr.lw),
+				.r_data(r_data),
+				.w_enabled(instr.sw),
+				.w_data(rs2));
+
+		assign rd = instr.lw ? r_data : alu_rd;
 		assign is_jump = instr_out.jal || instr_out.jalr || (instr_out.is_conditional_jump && alu_rd == 32'b1);
 		assign jump_dest = instr_out.jal  ? $signed(instr_out.pc) + $signed($signed(instr_out.imm) >>> 2) :
 											 instr_out.jalr ? $signed(rs1) + $signed($signed(instr_out.imm) >>> 2) :
@@ -52,8 +59,6 @@ module execute
 			if (rstn) begin
 				if (enabled) begin
 					instr_out <= instr;
-					rs1_out <= rs1;
-					rs2_out <= rs2;
 				end
 			end
 		end

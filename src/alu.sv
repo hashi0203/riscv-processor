@@ -37,13 +37,13 @@ module alu
 				// もしかしたら rs1 は >>> 2 しない方がいいかも
 				// instr.lb     ? :
 				// instr.lh     ? :
-				instr.lw     ? $signed(($signed(rs1) + $signed(instr.imm))) >>> 2:
+				// instr.lw     ? $signed(($signed(rs1) + $signed(instr.imm))) >>> 2:
 				// instr.lbu    ? :
 				// instr.lhu    ? :
 
 				// instr.sb     ? :
 				// instr.sh     ? :
-				instr.sw     ? $signed(($signed(rs1) + $signed(instr.imm))) >>> 2:
+				// instr.sw     ? $signed(($signed(rs1) + $signed(instr.imm))) >>> 2:
 
 				instr.addi   ? $signed(rs1) + $signed(instr.imm) :
 				instr.slti   ? $signed(rs1) < $signed(instr.imm) :

@@ -6,11 +6,11 @@ module test_core();
     wire rstn = 1;
     wire [31:0] pc;
     wire [1:0] state;
-    wire [31:0] register [31:0];
+    wire [31:0] rd;
+    wire [31:0] regs [31:0];
     int i, r;
 
-    core _core(clk, rstn, pc, state, register);
-    wire [3:0] a = 4'b1100;
+    core _core(clk, rstn, pc, state, rd, regs);
 
     initial begin
       // $dumpfile("test_core.vcd");
@@ -20,17 +20,19 @@ module test_core();
       $display("difference message format");
 
       clk = 0;
-      for (i=0; i<45700; i++) begin
+      for (i=0; i<60930; i++) begin
         #10
         clk = ~clk;
         if (state == 0 && pc == 35) begin
+        // if (state == 0) begin
           $display("pc: %d", pc[5:0]);
           $display("state: %d", state);
+          // $display("rd: %3d", $signed(rd));
           $display("register:");
           for (r=0; r<15; r++) begin
-            $write("r%02d: %3d,    ", r, $signed(register[r]));
+            $write("r%02d: %3d,    ", r, $signed(regs[r]));
           end
-          $display("r%02d: %3d", r, $signed(register[r]));
+          $display("r%02d: %3d", r, $signed(regs[r]));
         end
       end
 

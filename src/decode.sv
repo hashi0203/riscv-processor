@@ -33,7 +33,6 @@ module decode
     // j, u, and i do not require rs2
     assign rs2 = (r_type || s_type || b_type) ? _rs2 : 5'b00000;
 
-    // wire        _addi  = (opcode == 7'b0110011);
     wire _lui    = (opcode == 7'b0110111);
 		wire _auipc  = (opcode == 7'b0010111);
 
@@ -125,7 +124,6 @@ module decode
                        32'b0;
 					instr.pc <= pc;
 
-					// instr.addi <= _addi;
           instr.lui    <= _lui;
           instr.auipc  <= _auipc;
 
