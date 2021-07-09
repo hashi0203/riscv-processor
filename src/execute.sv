@@ -36,7 +36,7 @@ module execute
 		wire _completed = 1;
 		assign completed = _completed & !enabled;
 
-		reg [31:0] r_data;
+		wire [31:0] r_data;
 		memory _memory
 			( .clk(clk),
 				.rstn(rstn),
@@ -49,11 +49,11 @@ module execute
 				.w_data(rs2) );
 
 		assign rd = instr.lw ? r_data : alu_rd;
-		assign is_jump = instr_out.jal || instr_out.jalr || (instr_out.is_conditional_jump && alu_rd == 32'b1);
-		assign jump_dest = instr_out.jal  ? $signed(instr_out.pc) + $signed($signed(instr_out.imm) >>> 2) :
-											 instr_out.jalr ? $signed(rs1) + $signed($signed(instr_out.imm) >>> 2) :
-											 instr_out.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr_out.pc) + $signed($signed(instr_out.imm) >>> 2) :
-											 instr_out.pc + 1;
+		assign is_jump = instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1);
+		assign jump_dest = instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
+											 instr.jalr ? $signed(rs1) + $signed($signed(instr.imm) >>> 2) :
+											 instr.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
+											 instr.pc + 1;
 
 		always @(posedge clk) begin
 			if (rstn) begin

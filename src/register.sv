@@ -9,8 +9,8 @@ module register
    input  wire [4:0]  rs1_addr,
    input  wire [4:0]  rs2_addr,
 
-   output reg  [31:0] rs1_data,
-   output reg  [31:0] rs2_data,
+   output wire [31:0] rs1_data,
+   output wire [31:0] rs2_data,
 
    input  wire        w_enabled,
    input  wire [4:0]  w_addr,
@@ -31,18 +31,21 @@ module register
 		end
 	end
 
+	assign rs1_data = (w_enabled && w_addr != 0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr];
+	assign rs2_data = (w_enabled && w_addr != 0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr];
+
 	always @(posedge clk) begin
 		if(rstn) begin
-			if (r_enabled) begin
-				rs1_data <= (w_enabled && w_addr != 0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr];
-				rs2_data <= (w_enabled && w_addr != 0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr];
-			end
+			// if (r_enabled) begin
+			// 	rs1_data <= (w_enabled && w_addr != 0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr];
+			// 	rs2_data <= (w_enabled && w_addr != 0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr];
+			// end
 			if(w_enabled) begin
 				regs[w_addr] <= w_data;
 			end
-		end else begin
-			rs1_data <= 0;
-			rs2_data <= 0;
+		// end else begin
+		// 	rs1_data <= 0;
+		// 	rs2_data <= 0;
 		end
 		regs_out <= regs;
 	end
