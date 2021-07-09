@@ -10,8 +10,9 @@ module core
 		output reg [31:0] rd_out,
 		output reg [31:0] regs_out [31:0] );
 
-		reg [31:0]      pc;
-		reg [1:0]       state;
+		reg [31:0] pc;
+		reg [1:0]  state;
+		reg        is_stall;
 
 		// fetch
 		reg  fetch_enabled;
@@ -42,6 +43,7 @@ module core
 		instructions instr_de;
 		wire [4:0] rs1_addr;
 		wire [4:0] rs2_addr;
+		wire       may_jump;
 
 		decode _decode
 			( .clk(clk),
@@ -53,7 +55,8 @@ module core
 				.completed(decode_completed),
 				.instr(instr_de),
 				.rs1(rs1_addr),
-				.rs2(rs2_addr) );
+				.rs2(rs2_addr),
+				.may_jump(may_jump) );
 
 		// execute
 		reg  execute_enabled;
@@ -139,6 +142,7 @@ module core
 			begin
 				pc <= 32'b0;
 				state <= 2'b00;
+				is_stall <= 0;
 
 				fetch_enabled <= 1;
 				decode_enabled <= 0;
@@ -162,8 +166,15 @@ module core
 		task set_de_reg;
 			begin
 				// instr_de_in <= instr_de_out;
-				rs1_de_in <= rs1_data;
-				rs2_de_in <= rs2_data;
+				// rs1_de_in <= rs1_data;
+				// rs2_de_in <= rs2_data;
+
+				rs1_de_in <= (rs1_addr == instr_de.rd) ? rd_ew_out :
+										 (rs1_addr == instr_ew.rd) ? rd_ew_in  :
+										 rs1_data;
+				rs2_de_in <= (rs2_addr == instr_de.rd) ? rd_ew_out :
+										 (rs2_addr == instr_ew.rd) ? rd_ew_in  :
+										 rs2_data;
 			end
 		endtask
 
@@ -184,63 +195,162 @@ module core
 			rd_out <= rd_ew_out;
 			regs_out <= regs;
 			if (rstn) begin
-				if (state == 2'b00) begin
-					state <= 2'b01;
 
-					fetch_enabled <= 0;
-					decode_enabled <= 1;
-					execute_enabled <= 0;
-					write_enabled <= 0;
-
-					fetch_rstn <= 0;
-					decode_rstn <= 1;
-					execute_rstn <= 0;
-					write_rstn <= 0;
-
-					set_fd_reg();
-				end else if (state == 2'b01) begin
-					state <= 2'b10;
-
-					fetch_enabled <= 0;
-					decode_enabled <= 0;
-					execute_enabled <= 1;
-					write_enabled <= 0;
-
-					fetch_rstn <= 0;
-					decode_rstn <= 0;
-					execute_rstn <= 1;
-					write_rstn <= 0;
-
-					set_de_reg();
-				end else if (state == 2'b10) begin
-					state <= 2'b11;
-
-					fetch_enabled <= 0;
-					decode_enabled <= 0;
-					execute_enabled <= 0;
-					write_enabled <= 1;
-
-					fetch_rstn <= 0;
-					decode_rstn <= 0;
-					execute_rstn <= 0;
-					write_rstn <= 1;
-
-					set_ew_reg();
-
+				if (is_stall) begin
 					pc <= jump_dest;
-				end else if (state == 2'b11) begin
-					state <= 2'b00;
+					is_stall <= 0;
 
 					fetch_enabled <= 1;
-					decode_enabled <= 0;
-					execute_enabled <= 0;
-					write_enabled <= 0;
+					decode_enabled <= fetch_enabled;
+					execute_enabled <= decode_enabled;
+					write_enabled <= execute_enabled;
 
 					fetch_rstn <= 1;
+					decode_rstn <= fetch_rstn;
+					execute_rstn <= decode_rstn;
+					write_rstn <= execute_rstn;
+				end else if (may_jump) begin
+					is_stall <= 1;
+
+					fetch_enabled <= 0;
+					decode_enabled <= 0;
+					execute_enabled <= decode_enabled;
+					write_enabled <= execute_enabled;
+
+					fetch_rstn <= 0;
 					decode_rstn <= 0;
-					execute_rstn <= 0;
-					write_rstn <= 0;
+					execute_rstn <= decode_rstn;
+					write_rstn <= execute_rstn;
+				end else begin
+					pc <= pc + 1;
+
+					decode_enabled <= fetch_enabled;
+					execute_enabled <= decode_enabled;
+					write_enabled <= execute_enabled;
+
+					decode_rstn <= fetch_rstn;
+					execute_rstn <= decode_rstn;
+					write_rstn <= execute_rstn;
 				end
+
+				set_fd_reg();
+				set_de_reg();
+				set_ew_reg();
+
+
+				// state <= 2'b01;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 1;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 1;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 0;
+
+				// 	set_fd_reg();
+				// end else if (state == 2'b01) begin
+				// 	state <= 2'b10;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 1;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 1;
+				// 	write_rstn <= 0;
+
+				// 	set_de_reg();
+				// end else if (state == 2'b10) begin
+				// 	state <= 2'b11;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 1;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 1;
+
+				// 	set_ew_reg();
+
+				// 	pc <= jump_dest;
+				// end else if (state == 2'b11) begin
+				// 	state <= 2'b00;
+
+				// 	fetch_enabled <= 1;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 1;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 0;
+
+				// if (state == 2'b00) begin
+				// 	state <= 2'b01;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 1;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 1;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 0;
+
+				// 	set_fd_reg();
+				// end else if (state == 2'b01) begin
+				// 	state <= 2'b10;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 1;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 1;
+				// 	write_rstn <= 0;
+
+				// 	set_de_reg();
+				// end else if (state == 2'b10) begin
+				// 	state <= 2'b11;
+
+				// 	fetch_enabled <= 0;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 1;
+
+				// 	fetch_rstn <= 0;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 1;
+
+				// 	set_ew_reg();
+
+				// 	pc <= jump_dest;
+				// end else if (state == 2'b11) begin
+				// 	state <= 2'b00;
+
+				// 	fetch_enabled <= 1;
+				// 	decode_enabled <= 0;
+				// 	execute_enabled <= 0;
+				// 	write_enabled <= 0;
+
+				// 	fetch_rstn <= 1;
+				// 	decode_rstn <= 0;
+				// 	execute_rstn <= 0;
+				// 	write_rstn <= 0;
+				// end
 			end else begin
 				init();
 			end

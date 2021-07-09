@@ -11,7 +11,8 @@ module decode
     output wire         completed,
     output instructions instr,
     output wire [4:0]   rs1,
-    output wire [4:0]   rs2 );
+    output wire [4:0]   rs2,
+    output wire         may_jump );
 
 
     wire [6:0]  funct7 = instr_raw[31:25];
@@ -102,6 +103,7 @@ module decode
     wire _is_store            = (_sb || _sw);
     wire _is_load             = (_lw || _lbu);
     wire _is_conditional_jump = (_beq || _bne || _blt || _bge || _bltu || _bgeu);
+    assign may_jump = (_jal || _jalr || _is_conditional_jump);
 
 		reg  _completed;
 		assign completed = _completed & !enabled;
