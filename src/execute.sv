@@ -43,12 +43,12 @@ module execute
 				.base(rs1),
 				.offset(instr.imm),
 
-				.r_enabled(instr.lw),
+				.r_enabled(instr.is_load),
 				.r_data(r_data),
-				.w_enabled(instr.sw),
+				.w_enabled(instr.is_store),
 				.w_data(rs2) );
 
-		assign rd = instr.lw ? r_data : alu_rd;
+		assign rd = instr.is_load ? r_data : alu_rd;
 		assign is_jump = instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1);
 		assign jump_dest = instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
 											 instr.jalr ? $signed(rs1) + $signed($signed(instr.imm) >>> 2) :

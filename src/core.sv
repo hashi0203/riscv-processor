@@ -170,10 +170,10 @@ module core
 				// rs2_de_in <= rs2_data;
 
 				rs1_de_in <= (rs1_addr == instr_de.rd) ? rd_ew_out :
-										 (rs1_addr == instr_ew.rd) ? rd_ew_in  :
+										//  (rs1_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs1_data;
 				rs2_de_in <= (rs2_addr == instr_de.rd) ? rd_ew_out :
-										 (rs2_addr == instr_ew.rd) ? rd_ew_in  :
+										//  (rs2_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs2_data;
 			end
 		endtask
@@ -236,121 +236,6 @@ module core
 				set_fd_reg();
 				set_de_reg();
 				set_ew_reg();
-
-
-				// state <= 2'b01;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 1;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 1;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 0;
-
-				// 	set_fd_reg();
-				// end else if (state == 2'b01) begin
-				// 	state <= 2'b10;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 1;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 1;
-				// 	write_rstn <= 0;
-
-				// 	set_de_reg();
-				// end else if (state == 2'b10) begin
-				// 	state <= 2'b11;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 1;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 1;
-
-				// 	set_ew_reg();
-
-				// 	pc <= jump_dest;
-				// end else if (state == 2'b11) begin
-				// 	state <= 2'b00;
-
-				// 	fetch_enabled <= 1;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 1;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 0;
-
-				// if (state == 2'b00) begin
-				// 	state <= 2'b01;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 1;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 1;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 0;
-
-				// 	set_fd_reg();
-				// end else if (state == 2'b01) begin
-				// 	state <= 2'b10;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 1;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 1;
-				// 	write_rstn <= 0;
-
-				// 	set_de_reg();
-				// end else if (state == 2'b10) begin
-				// 	state <= 2'b11;
-
-				// 	fetch_enabled <= 0;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 1;
-
-				// 	fetch_rstn <= 0;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 1;
-
-				// 	set_ew_reg();
-
-				// 	pc <= jump_dest;
-				// end else if (state == 2'b11) begin
-				// 	state <= 2'b00;
-
-				// 	fetch_enabled <= 1;
-				// 	decode_enabled <= 0;
-				// 	execute_enabled <= 0;
-				// 	write_enabled <= 0;
-
-				// 	fetch_rstn <= 1;
-				// 	decode_rstn <= 0;
-				// 	execute_rstn <= 0;
-				// 	write_rstn <= 0;
-				// end
 			end else begin
 				init();
 			end
