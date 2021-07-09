@@ -36,16 +36,9 @@ module register
 
 	always @(posedge clk) begin
 		if(rstn) begin
-			// if (r_enabled) begin
-			// 	rs1_data <= (w_enabled && w_addr != 0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr];
-			// 	rs2_data <= (w_enabled && w_addr != 0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr];
-			// end
 			if(w_enabled) begin
 				regs[w_addr] <= w_data;
 			end
-		// end else begin
-		// 	rs1_data <= 0;
-		// 	rs2_data <= 0;
 		end
 		regs_out <= regs;
 	end

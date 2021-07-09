@@ -13,7 +13,6 @@ module alu
 		output reg          completed,
 
 		output wire [31:0]  rd );
-		// output reg [31:0]   rd );
 
 		wire [31:0] _rs1_pn = rs1[31] ? ~32'b0 : 32'b0;
 		wire [31:0] _rs2_pn = rs2[31] ? ~32'b0 : 32'b0;
@@ -21,7 +20,6 @@ module alu
 		wire [63:0] _mulsu = $signed({_rs1_pn, rs1} * $signed({  32'b0, rs2}));
 		wire [63:0] _muluu = $signed({  32'b0, rs1} * $signed({  32'b0, rs2}));
 
-		// wire [31:0] _rd =
 		assign rd =
 				instr.lui    ? instr.imm :
 				instr.auipc  ? $signed(instr.pc) + $signed(instr.imm) :
@@ -88,17 +86,6 @@ module alu
 				instr.rem    ? $signed(rs1) % $signed(rs2):
 				instr.remu   ? rs1 % rs2 :
 				32'b0;
-
-		// always @(posedge clk) begin
-		// 	if (rstn) begin
-		// 		if (enabled) begin
-		// 			rd <= _rd;
-		// 			completed <= 1;
-		// 		end
-		// 	end else begin
-		// 		completed <= 0;
-		// 	end
-		// end
 
 endmodule
 

@@ -19,9 +19,6 @@ module memory
 
 	always @(posedge clk) begin
 		if(rstn) begin
-			// if (r_enabled) begin
-			// 	r_data <= mem[addr];
-			// end else if(w_enabled) begin
 			if(w_enabled) begin
 				mem[addr] <= w_data;
 			end

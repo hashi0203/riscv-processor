@@ -135,7 +135,6 @@ module core
 
 	 			.regs_out(regs) );
 
-		// assign register_out = state;
 		task init;
 			begin
 				pc <= 32'b0;
@@ -150,22 +149,6 @@ module core
 				decode_rstn <= 0;
 				execute_rstn <= 0;
 				write_rstn <= 0;
-
-				// register[0] <= 32'b0;
-				// register[1] <= 32'b0;
-				// // register[2] <= 32'b10;
-				// // register[2] <= 32'b100000;
-				// register[2] <= 32'd512;
-				// // register[3] <= 32'b1;
-				// register[3] <= 32'b0;
-				// register[4] <= 32'b0;
-				// register[5] <= 32'b0;
-				// register[6] <= 32'b0;
-				// register[7] <= 32'b0;
-				// register[8] <= 32'b0;
-				// fetch_completed <= 1;
-				// pc_fd_in <= 0;
-				// instr_fd_in <= inst_mem[0];
  			end
 		endtask
 
@@ -173,16 +156,12 @@ module core
 			begin
 				pc_fd_in <= pc;
 				instr_fd_in <= instr_fd_out;
-				// instr_fd_in <= inst_mem[pc];
-				// register_out <= inst_mem[pc];
 			end
 		endtask
 
 		task set_de_reg;
 			begin
 				// instr_de_in <= instr_de_out;
-				// rs1_data <= register[rs1_addr];
-				// rs2_data <= register[rs2_addr];
 				rs1_de_in <= rs1_data;
 				rs2_de_in <= rs2_data;
 			end
@@ -203,96 +182,69 @@ module core
 			pc_out <= pc;
 			state_out <= state;
 			rd_out <= rd_ew_out;
-			// register_out <= register;
 			regs_out <= regs;
 			if (rstn) begin
 				if (state == 2'b00) begin
-					// if (fetch_enabled == 1) begin
-					// 	fetch_enabled <= 0;
-					// end
-					// // fetch_completed <= 1;
-					// if (fetch_completed) begin
-						state <= 2'b01;
+					state <= 2'b01;
 
-						fetch_enabled <= 0;
-						decode_enabled <= 1;
-						execute_enabled <= 0;
-						write_enabled <= 0;
+					fetch_enabled <= 0;
+					decode_enabled <= 1;
+					execute_enabled <= 0;
+					write_enabled <= 0;
 
-						fetch_rstn <= 0;
-						decode_rstn <= 1;
-						execute_rstn <= 0;
-						write_rstn <= 0;
+					fetch_rstn <= 0;
+					decode_rstn <= 1;
+					execute_rstn <= 0;
+					write_rstn <= 0;
 
-						set_fd_reg();
-					// end
+					set_fd_reg();
 				end else if (state == 2'b01) begin
-					// if (decode_enabled == 1) begin
-					// 	decode_enabled <= 0;
-					// end
+					state <= 2'b10;
 
-					// if (decode_completed) begin
-						state <= 2'b10;
+					fetch_enabled <= 0;
+					decode_enabled <= 0;
+					execute_enabled <= 1;
+					write_enabled <= 0;
 
-						fetch_enabled <= 0;
-						decode_enabled <= 0;
-						execute_enabled <= 1;
-						write_enabled <= 0;
+					fetch_rstn <= 0;
+					decode_rstn <= 0;
+					execute_rstn <= 1;
+					write_rstn <= 0;
 
-						fetch_rstn <= 0;
-						decode_rstn <= 0;
-						execute_rstn <= 1;
-						write_rstn <= 0;
-
-						set_de_reg();
-					// end
+					set_de_reg();
 				end else if (state == 2'b10) begin
-					// if (execute_enabled == 1) begin
-					// 	execute_enabled <= 0;
-					// end
+					state <= 2'b11;
 
-					// if (execute_completed) begin
-						state <= 2'b11;
+					fetch_enabled <= 0;
+					decode_enabled <= 0;
+					execute_enabled <= 0;
+					write_enabled <= 1;
 
-						fetch_enabled <= 0;
-						decode_enabled <= 0;
-						execute_enabled <= 0;
-						write_enabled <= 1;
+					fetch_rstn <= 0;
+					decode_rstn <= 0;
+					execute_rstn <= 0;
+					write_rstn <= 1;
 
-						fetch_rstn <= 0;
-						decode_rstn <= 0;
-						execute_rstn <= 0;
-						write_rstn <= 1;
+					set_ew_reg();
 
-						set_ew_reg();
-
-						pc <= jump_dest;
-					// end
+					pc <= jump_dest;
 				end else if (state == 2'b11) begin
-					// if (write_enabled == 1) begin
-					// 	write_enabled <= 0;
-					// end
+					state <= 2'b00;
 
-					// if (write_completed) begin
-						state <= 2'b00;
+					fetch_enabled <= 1;
+					decode_enabled <= 0;
+					execute_enabled <= 0;
+					write_enabled <= 0;
 
-						fetch_enabled <= 1;
-						decode_enabled <= 0;
-						execute_enabled <= 0;
-						write_enabled <= 0;
-
-						fetch_rstn <= 1;
-						decode_rstn <= 0;
-						execute_rstn <= 0;
-						write_rstn <= 0;
-					// end
+					fetch_rstn <= 1;
+					decode_rstn <= 0;
+					execute_rstn <= 0;
+					write_rstn <= 0;
 				end
 			end else begin
 				init();
 			end
 		end
-
-
 endmodule
 
 `default_nettype wire
