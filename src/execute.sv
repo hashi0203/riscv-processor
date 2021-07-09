@@ -29,7 +29,7 @@ module execute
 				.rs1(rs1),
 				.rs2(rs2),
 				.completed(alu_completed),
-				.rd(alu_rd));
+				.rd(alu_rd) );
 
 		// wire _completed = ((instr_n.rv32f && fpu_completed)
 		// 										|| (!instr_n.rv32f && alu_completed));
@@ -46,7 +46,7 @@ module execute
 				.r_enabled(instr.lw),
 				.r_data(r_data),
 				.w_enabled(instr.sw),
-				.w_data(rs2));
+				.w_data(rs2) );
 
 		assign rd = instr.lw ? r_data : alu_rd;
 		assign is_jump = instr_out.jal || instr_out.jalr || (instr_out.is_conditional_jump && alu_rd == 32'b1);

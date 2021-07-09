@@ -113,7 +113,7 @@ module core
 				.reg_w_enabled(reg_w_enabled),
 				.reg_w_addr(reg_w_addr),
 				.reg_w_data(reg_w_data),
-				.completed(write_completed));
+				.completed(write_completed) );
 
 		reg [31:0] rs1_val;
 		reg [31:0] rs2_val;
@@ -134,7 +134,7 @@ module core
    			.w_addr(reg_w_addr),
    			.w_data(reg_w_data),
 
-	 			.regs_out(regs));
+	 			.regs_out(regs) );
 
 		// assign register_out = state;
 		task init;
