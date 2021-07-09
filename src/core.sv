@@ -115,8 +115,8 @@ module core
 				.reg_w_data(reg_w_data),
 				.completed(write_completed) );
 
-		reg [31:0] rs1_val;
-		reg [31:0] rs2_val;
+		reg [31:0] rs1_data;
+		reg [31:0] rs2_data;
 		reg [31:0] regs [31:0];
 
 		register _register
@@ -127,8 +127,8 @@ module core
    			.rs1_addr(rs1_addr),
    			.rs2_addr(rs2_addr),
 
-  			.rs1_val(rs1_val),
-   			.rs2_val(rs2_val),
+  			.rs1_data(rs1_data),
+   			.rs2_data(rs2_data),
 
    			.w_enabled(reg_w_enabled),
    			.w_addr(reg_w_addr),
@@ -182,10 +182,10 @@ module core
 		task set_de_reg;
 			begin
 				instr_de_in <= instr_de_out;
-				// rs1_val <= register[rs1_addr];
-				// rs2_val <= register[rs2_addr];
-				rs1_de_in <= rs1_val;
-				rs2_de_in <= rs2_val;
+				// rs1_data <= register[rs1_addr];
+				// rs2_data <= register[rs2_addr];
+				rs1_de_in <= rs1_data;
+				rs2_de_in <= rs2_data;
 			end
 		endtask
 
