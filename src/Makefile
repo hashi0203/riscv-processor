@@ -1,4 +1,3 @@
-
 ALL_SRC=$(shell ls *.sv)
 TEST_SRC=test_core.sv
 CIRC_SRC=$(filter-out $(TEST_SRC), $(ALL_SRC))
