@@ -147,12 +147,12 @@ module core
 		reg [1:0]  global_pred_fd;
 		reg [1:0]  global_pred_de;
 
-		wire [31:0] pred_jump_dest = (bht[pc[7:0]][global_pred][1] == 1 && btac[pc[7:0]][55:32] == pc[31:8]) ?
+		wire [31:0] pred_jump_dest = (bht[pc[7:0]][global_pred][1] && btac[pc[7:0]][55:32] == pc[31:8]) ?
 																	btac[pc[7:0]][31:0] : pc + 1;
 
-		wire is_jump_e = (execute_enabled == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
-		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
-		wire pred_fail    = (is_jump_e == 1 && jump_dest != pc_fd_in);
+		wire is_jump_e = (execute_enabled && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
+		wire pred_succeed = (is_jump_e && jump_dest == pc_fd_in);
+		wire pred_fail    = (is_jump_e && jump_dest != pc_fd_in);
 		wire [31:0] pc_e  = instr_de.pc;
 		wire [1:0]  bh_t  = (bht[pc_e[7:0]][global_pred_de] == 2'b00) ? 2'b01 :
 									 	 		(bht[pc_e[7:0]][global_pred_de] == 2'b01) ? 2'b10 :
@@ -202,9 +202,9 @@ module core
 
 		task set_de_reg;
 			begin
-				rs1_de_in <= (execute_enabled == 1 && rs1_addr == instr_de.rd) ?
+				rs1_de_in <= (execute_enabled && rs1_addr == instr_de.rd) ?
 										 rd_ew_out : rs1_data;
-				rs2_de_in <= (execute_enabled == 1 && rs2_addr == instr_de.rd) ?
+				rs2_de_in <= (execute_enabled && rs2_addr == instr_de.rd) ?
 										 rd_ew_out : rs2_data;
 				global_pred_de <= global_pred_fd;
 			end
