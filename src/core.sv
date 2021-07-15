@@ -2,8 +2,8 @@
 `include "def.sv"
 
 module core
-	( input wire        clk,
-		input wire        rstn,
+	( input  wire       clk,
+		input  wire       rstn,
 
 		output reg [31:0] pc_out,
 		output reg [31:0] rd_out,
@@ -62,7 +62,6 @@ module core
 		reg  execute_rstn;
 		wire execute_completed;
 
-		// instructions instr_de_in;
 		reg [31:0] rs1_de_in;
 		reg [31:0] rs2_de_in;
 
@@ -97,7 +96,6 @@ module core
 		reg  write_rstn;
 		wire write_completed;
 
-		// instructions instr_ew_in;
 		reg [31:0]  rd_ew_in;
 
 		wire        reg_w_enabled;
@@ -155,11 +153,11 @@ module core
 		wire is_jump_e = (execute_enabled == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
 		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
 		wire pred_fail    = (is_jump_e == 1 && jump_dest != pc_fd_in);
-		wire [31:0]  pc_e = instr_de.pc;
-		wire [1:0]   t_bh = (bht[pc_e[7:0]][global_pred_de] == 2'b00) ? 2'b01 :
+		wire [31:0] pc_e  = instr_de.pc;
+		wire [1:0]  bh_t  = (bht[pc_e[7:0]][global_pred_de] == 2'b00) ? 2'b01 :
 									 	 		(bht[pc_e[7:0]][global_pred_de] == 2'b01) ? 2'b10 :
 									 			2'b11;
-		wire [1:0]  nt_bh = (bht[pc_e[7:0]][global_pred_de] == 2'b11) ? 2'b10 :
+		wire [1:0]  bh_nt = (bht[pc_e[7:0]][global_pred_de] == 2'b11) ? 2'b10 :
 												(bht[pc_e[7:0]][global_pred_de] == 2'b10) ? 2'b01 :
 												2'b00;
 
@@ -182,10 +180,10 @@ module core
 				write_rstn <= 0;
 
 				for (i=0; i<256; i++) begin
-						bht[i][0]  <= 8'b1;
-						bht[i][1]  <= 8'b1;
-						bht[i][2]  <= 8'b1;
-						bht[i][3]  <= 8'b1;
+						bht[i][0]  <= 2'b1;
+						bht[i][1]  <= 2'b1;
+						bht[i][2]  <= 2'b1;
+						bht[i][3]  <= 2'b1;
 						btac[i]    <= 56'b0;
 				end
 				global_pred    <= 2'b0;
@@ -214,7 +212,6 @@ module core
 
 		task set_ew_reg;
 			begin
-				// instr_ew_in <= instr_ew_out;
 				rd_ew_in <= rd_ew_out;
 			end
 		endtask
@@ -230,37 +227,27 @@ module core
 
 			if (rstn) begin
 				if (pred_fail) begin
-					if (is_jump) begin
-						bht[pc_e[7:0]][global_pred_de] <= t_bh;
-						btac[pc_e[7:0]] <= {pc_e[31:8], jump_dest};
-						global_pred <= {global_pred[0], 1'b1};
-					end else begin
-						bht[pc_e[7:0]][global_pred_de] <= nt_bh;
-						global_pred <= {global_pred[0], 1'b0};
-					end
-
+					bht[pc_e[7:0]][global_pred_de] <= is_jump ? bh_t : bh_nt;
+					global_pred <= {global_pred[0], is_jump};
 					preds[0] <= preds[0] + 1;
 					preds[2] <= preds[2] + 1;
+					if (is_jump) begin
+						btac[pc_e[7:0]] <= {pc_e[31:8], jump_dest};
+					end
+
 					pc <= jump_dest;
 
-					fetch_enabled <= 1;
 					decode_enabled <= 0;
 					execute_enabled <= 0;
 					write_enabled <= execute_enabled;
 
-					fetch_rstn <= 1;
 					decode_rstn <= 0;
 					execute_rstn <= 0;
 					write_rstn <= execute_rstn;
 				end else begin
 					if (pred_succeed) begin
-						if (is_jump) begin
-							bht[pc_e[7:0]][global_pred_de] <= t_bh;
-							global_pred <= {global_pred[0], 1'b1};
-						end else begin
-							bht[pc_e[7:0]][global_pred_de] <= nt_bh;
-							global_pred <= {global_pred[0], 1'b0};
-						end
+						bht[pc_e[7:0]][global_pred_de] <= is_jump ? bh_t : bh_nt;
+						global_pred <= {global_pred[0], is_jump};
 						preds[0] <= preds[0] + 1;
 						preds[1] <= preds[1] + 1;
 					end
