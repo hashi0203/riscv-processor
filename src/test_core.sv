@@ -6,7 +6,7 @@ module test_core();
     wire rstn = 1;
     wire [31:0] pc;
     wire [31:0] rd;
-		wire [31:0] preds [2:0];
+    wire [31:0] preds [2:0];
     wire [31:0] regs [31:0];
     wire completed;
     int i, r;
