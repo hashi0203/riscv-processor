@@ -2,13 +2,14 @@
 `include "def.sv"
 
 module core
-	( input wire      clk,
-		input wire      rstn,
+	( input wire        clk,
+		input wire        rstn,
 
 		output reg [31:0] pc_out,
 		output reg [31:0] rd_out,
 		output reg [31:0] preds [2:0],
-		output reg [31:0] regs [31:0] );
+		output reg [31:0] regs [31:0],
+		output reg        completed );
 
 		reg [31:0] pc;
 
@@ -142,21 +143,24 @@ module core
 		wire _cond_jump   = (opcode == 7'b1100011);
 		wire is_jump_f    = (_jal || _jalr || _cond_jump);
 
-		reg [1:0]  bht  [255:0];
+		reg [1:0]  bht  [255:0] [3:0];
 		reg [55:0] btac [255:0];
+		reg [1:0]  global_pred;
+		reg [1:0]  global_pred_fd;
+		reg [1:0]  global_pred_de;
 
-		wire [31:0] pred_jump_dest = (bht[pc[7:0]][1] == 1 && btac[pc[7:0]][55:32] == pc[31:8]) ?
+		wire [31:0] pred_jump_dest = (bht[pc[7:0]][global_pred][1] == 1 && btac[pc[7:0]][55:32] == pc[31:8]) ?
 																	btac[pc[7:0]][31:0] : pc + 1;
 
 		wire is_jump_e = (execute_enabled == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
 		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
 		wire pred_fail    = (is_jump_e == 1 && jump_dest != pc_fd_in);
 		wire [31:0]  pc_e = instr_de.pc;
-		wire [1:0]   t_bh = (bht[pc_e[7:0]] == 2'b00) ? 2'b01 :
-									 	 		(bht[pc_e[7:0]] == 2'b01) ? 2'b10 :
+		wire [1:0]   t_bh = (bht[pc_e[7:0]][global_pred_de] == 2'b00) ? 2'b01 :
+									 	 		(bht[pc_e[7:0]][global_pred_de] == 2'b01) ? 2'b10 :
 									 			2'b11;
-		wire [1:0]  nt_bh = (bht[pc_e[7:0]] == 2'b11) ? 2'b10 :
-												(bht[pc_e[7:0]] == 2'b10) ? 2'b01 :
+		wire [1:0]  nt_bh = (bht[pc_e[7:0]][global_pred_de] == 2'b11) ? 2'b10 :
+												(bht[pc_e[7:0]][global_pred_de] == 2'b10) ? 2'b01 :
 												2'b00;
 
 		integer i;
@@ -178,9 +182,15 @@ module core
 				write_rstn <= 0;
 
 				for (i=0; i<256; i++) begin
-						bht[i]  <= 2'b1;
-						btac[i] <= 56'b0;
+						bht[i][0]  <= 8'b1;
+						bht[i][1]  <= 8'b1;
+						bht[i][2]  <= 8'b1;
+						bht[i][3]  <= 8'b1;
+						btac[i]    <= 56'b0;
 				end
+				global_pred    <= 2'b0;
+				global_pred_fd <= 2'b0;
+				global_pred_de <= 2'b0;
  			end
 		endtask
 
@@ -188,6 +198,7 @@ module core
 			begin
 				pc_fd_in <= pc;
 				instr_fd_in <= instr_fd_out;
+				global_pred_fd <= global_pred;
 			end
 		endtask
 
@@ -197,6 +208,7 @@ module core
 										 rd_ew_out : rs1_data;
 				rs2_de_in <= (execute_enabled == 1 && rs2_addr == instr_de.rd) ?
 										 rd_ew_out : rs2_data;
+				global_pred_de <= global_pred_fd;
 			end
 		endtask
 
@@ -214,12 +226,17 @@ module core
 		always @(posedge clk) begin
 			pc_out <= pc;
 			rd_out <= rd_ew_out;
-			if (rstn) begin
+			completed <= instr_ew.pc == 32'd35;
 
+			if (rstn) begin
 				if (pred_fail) begin
-					bht[pc_e[7:0]] <= nt_bh;
 					if (is_jump) begin
+						bht[pc_e[7:0]][global_pred_de] <= t_bh;
 						btac[pc_e[7:0]] <= {pc_e[31:8], jump_dest};
+						global_pred <= {global_pred[0], 1'b1};
+					end else begin
+						bht[pc_e[7:0]][global_pred_de] <= nt_bh;
+						global_pred <= {global_pred[0], 1'b0};
 					end
 
 					preds[0] <= preds[0] + 1;
@@ -237,7 +254,13 @@ module core
 					write_rstn <= execute_rstn;
 				end else begin
 					if (pred_succeed) begin
-						bht[pc_e[7:0]] <= t_bh;
+						if (is_jump) begin
+							bht[pc_e[7:0]][global_pred_de] <= t_bh;
+							global_pred <= {global_pred[0], 1'b1};
+						end else begin
+							bht[pc_e[7:0]][global_pred_de] <= nt_bh;
+							global_pred <= {global_pred[0], 1'b0};
+						end
 						preds[0] <= preds[0] + 1;
 						preds[1] <= preds[1] + 1;
 					end
