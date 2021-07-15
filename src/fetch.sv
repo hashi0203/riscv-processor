@@ -2,14 +2,14 @@
 `include "def.sv"
 
 module fetch
-  (input  wire        clk,
-   input  wire        rstn,
-   input  wire        enabled,
-   input  wire [31:0] pc,
+  ( input  wire        clk,
+    input  wire        rstn,
+    input  wire        enabled,
+    input  wire [31:0] pc,
 
-   output wire        completed,
-   output reg  [31:0] pc_n,
-   output wire [31:0] instr_raw );
+    output wire        completed,
+    output reg  [31:0] pc_n,
+    output wire [31:0] instr_raw );
 
   // fib
   reg [31:0] instr_mem [0:40] = '{
@@ -87,21 +87,21 @@ module fetch
   //   32'b11111111100111111111000011101111   // JAL -2(imm) 1(rd)
   // };
 
-   reg _completed;
-   assign completed = _completed & !enabled;
-   assign instr_raw = instr_mem[pc];
+  reg _completed;
+  assign completed = _completed & !enabled;
+  assign instr_raw = instr_mem[pc];
 
-   always @(posedge clk) begin
-      if(rstn) begin
-         if (enabled) begin
-            _completed <= 1;
-            pc_n <= pc;
-         end
-      end else begin
-         _completed <= 0;
-         pc_n <= 0;
+  always @(posedge clk) begin
+    if(rstn) begin
+      if (enabled) begin
+        _completed <= 1;
+        pc_n <= pc;
       end
-   end
+    end else begin
+      _completed <= 0;
+      pc_n <= 0;
+    end
+  end
 endmodule
 
 `default_nettype wire

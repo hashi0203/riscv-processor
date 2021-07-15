@@ -2,32 +2,32 @@
 `include "def.sv"
 
 module register
-  (input  wire        clk,
-   input  wire        rstn,
-   input  wire        r_enabled,
+  ( input  wire        clk,
+    input  wire        rstn,
+    input  wire        r_enabled,
 
-   input  wire [4:0]  rs1_addr,
-   input  wire [4:0]  rs2_addr,
+    input  wire [4:0]  rs1_addr,
+    input  wire [4:0]  rs2_addr,
 
-   output wire [31:0] rs1_data,
-   output wire [31:0] rs2_data,
+    output wire [31:0] rs1_data,
+    output wire [31:0] rs2_data,
 
-   input  wire        w_enabled,
-   input  wire [4:0]  w_addr,
-   input  wire [31:0] w_data,
+    input  wire        w_enabled,
+    input  wire [4:0]  w_addr,
+    input  wire [31:0] w_data,
 
-   output reg  [31:0] regs_out [31:0] );
+    output reg  [31:0] regs_out [31:0] );
 
   reg [31:0] regs [31:0];
 
   integer i;
   initial begin
     for (i=0; i<32; i++) begin
-        if (i == 2) begin
-          regs[2] <= 32'd2048;
-        end else begin
-          regs[i] <= 0;
-        end
+      if (i == 2) begin
+        regs[2] <= 32'd2048;
+      end else begin
+        regs[i] <= 0;
+      end
     end
   end
 
@@ -42,7 +42,6 @@ module register
     end
     regs_out <= regs;
   end
-
 endmodule
 
 `default_nettype wire
