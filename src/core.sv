@@ -151,7 +151,7 @@ module core
 		wire [31:0] pred_jump_dest = (bht[pc[7:0]][2:1] == 2'b11 && btac[pc[7:0]][55:32] == pc[31:8]) ?
 																	btac[pc[7:0]][31:0] : pc + 1;
 
-		wire is_jump_e = (execute_rstn == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
+		wire is_jump_e = (execute_enabled == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
 		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
 		wire pred_fail = (is_jump_e == 1 && jump_dest != pc_fd_in);
 		wire [31:0] pc_e = instr_de.pc;
@@ -181,7 +181,7 @@ module core
 				write_rstn <= 0;
 
 				for (i=0; i<256; i++) begin
-						bht[i]  <= 3'b0;
+						bht[i]  <= 3'b1;
 						btac[i] <= 56'b0;
 				end
  			end
@@ -200,10 +200,10 @@ module core
 				// rs1_de_in <= rs1_data;
 				// rs2_de_in <= rs2_data;
 
-				rs1_de_in <= (execute_rstn == 1 && rs1_addr == instr_de.rd) ? rd_ew_out :
+				rs1_de_in <= (execute_enabled == 1 && rs1_addr == instr_de.rd) ? rd_ew_out :
 										//  (rs1_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs1_data;
-				rs2_de_in <= (execute_rstn == 1 && rs2_addr == instr_de.rd) ? rd_ew_out :
+				rs2_de_in <= (execute_enabled == 1 && rs2_addr == instr_de.rd) ? rd_ew_out :
 										//  (rs2_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs2_data;
 			end

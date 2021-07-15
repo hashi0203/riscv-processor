@@ -15,14 +15,14 @@ module memory
 	reg  [31:0] mem [0:1023];
 	wire [31:0] addr = $signed(($signed(base) + $signed(offset))) >>> 2;
 
-	assign r_data = mem[addr];
+	assign r_data = (rstn && r_enabled) ? mem[addr] : 32'b0;
 
-	// integer i;
-	// initial begin
-	// 	for (i=0; i<1024; i++) begin
-	// 			mem[i] <= 0;
-	// 	end
-	// end
+	integer i;
+	initial begin
+		for (i=0; i<1024; i++) begin
+				mem[i] <= 0;
+		end
+	end
 
 	always @(posedge clk) begin
 		if(rstn) begin

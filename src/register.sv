@@ -24,7 +24,7 @@ module register
 	initial begin
 		for (i=0; i<32; i++) begin
 				if (i == 2) begin
-					regs[2] <= 32'd512;
+					regs[2] <= 32'd2048;
 				end else begin
 					regs[i] <= 0;
 				end
