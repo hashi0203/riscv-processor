@@ -6,13 +6,11 @@ module core
 		input wire      rstn,
 
 		output reg [31:0] pc_out,
-		output reg [1:0]  state_out,
 		output reg [31:0] rd_out,
-		output reg [31:0] regs_out [31:0] );
+		output reg [31:0] preds [2:0],
+		output reg [31:0] regs [31:0] );
 
 		reg [31:0] pc;
-		reg [1:0]  state;
-		reg        is_stall;
 
 		// fetch
 		reg  fetch_enabled;
@@ -119,7 +117,6 @@ module core
 
 		wire [31:0] rs1_data;
 		wire [31:0] rs2_data;
-		reg  [31:0] regs [31:0];
 
 		register _register
 			( .clk(clk),
@@ -145,30 +142,30 @@ module core
 		wire _cond_jump   = (opcode == 7'b1100011);
 		wire is_jump_f    = (_jal || _jalr || _cond_jump);
 
-		reg [2:0]  bht  [255:0];
+		reg [1:0]  bht  [255:0];
 		reg [55:0] btac [255:0];
 
-		wire [31:0] pred_jump_dest = (bht[pc[7:0]][2:1] == 2'b11 && btac[pc[7:0]][55:32] == pc[31:8]) ?
+		wire [31:0] pred_jump_dest = (bht[pc[7:0]][1] == 1 && btac[pc[7:0]][55:32] == pc[31:8]) ?
 																	btac[pc[7:0]][31:0] : pc + 1;
 
 		wire is_jump_e = (execute_enabled == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
 		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
-		wire pred_fail = (is_jump_e == 1 && jump_dest != pc_fd_in);
-		wire [31:0] pc_e = instr_de.pc;
-		wire [1:0]  t_bh = (bht[pc_e[7:0]][1:0] == 2'b00) ? 2'b01 :
-									 		 (bht[pc_e[7:0]][1:0] == 2'b01) ? 2'b10 :
-									 		 2'b11;
-		wire [1:0] nt_bh = (bht[pc_e[7:0]][1:0] == 2'b11) ? 2'b10 :
-											 (bht[pc_e[7:0]][1:0] == 2'b10) ? 2'b01 :
-											 2'b00;
-		wire f_bh = (bht[pc_e[7:0]][2] || (is_jump_e && !pred_succeed));
+		wire pred_fail    = (is_jump_e == 1 && jump_dest != pc_fd_in);
+		wire [31:0]  pc_e = instr_de.pc;
+		wire [1:0]   t_bh = (bht[pc_e[7:0]] == 2'b00) ? 2'b01 :
+									 	 		(bht[pc_e[7:0]] == 2'b01) ? 2'b10 :
+									 			2'b11;
+		wire [1:0]  nt_bh = (bht[pc_e[7:0]] == 2'b11) ? 2'b10 :
+												(bht[pc_e[7:0]] == 2'b10) ? 2'b01 :
+												2'b00;
 
 		integer i;
 		task init;
 			begin
 				pc <= 32'b0;
-				state <= 2'b00;
-				is_stall <= 0;
+				preds[0] <= 32'b0;
+				preds[1] <= 32'b0;
+				preds[2] <= 32'b0;
 
 				fetch_enabled <= 1;
 				decode_enabled <= 0;
@@ -181,7 +178,7 @@ module core
 				write_rstn <= 0;
 
 				for (i=0; i<256; i++) begin
-						bht[i]  <= 3'b1;
+						bht[i]  <= 2'b1;
 						btac[i] <= 56'b0;
 				end
  			end
@@ -196,16 +193,10 @@ module core
 
 		task set_de_reg;
 			begin
-				// instr_de_in <= instr_de_out;
-				// rs1_de_in <= rs1_data;
-				// rs2_de_in <= rs2_data;
-
-				rs1_de_in <= (execute_enabled == 1 && rs1_addr == instr_de.rd) ? rd_ew_out :
-										//  (rs1_addr == instr_ew.rd) ? rd_ew_in  :
-										 rs1_data;
-				rs2_de_in <= (execute_enabled == 1 && rs2_addr == instr_de.rd) ? rd_ew_out :
-										//  (rs2_addr == instr_ew.rd) ? rd_ew_in  :
-										 rs2_data;
+				rs1_de_in <= (execute_enabled == 1 && rs1_addr == instr_de.rd) ?
+										 rd_ew_out : rs1_data;
+				rs2_de_in <= (execute_enabled == 1 && rs2_addr == instr_de.rd) ?
+										 rd_ew_out : rs2_data;
 			end
 		endtask
 
@@ -222,17 +213,17 @@ module core
 
 		always @(posedge clk) begin
 			pc_out <= pc;
-			state_out <= state;
 			rd_out <= rd_ew_out;
-			regs_out <= regs;
 			if (rstn) begin
 
 				if (pred_fail) begin
-					bht[pc_e[7:0]] <= {f_bh, nt_bh};
+					bht[pc_e[7:0]] <= nt_bh;
 					if (is_jump) begin
 						btac[pc_e[7:0]] <= {pc_e[31:8], jump_dest};
 					end
 
+					preds[0] <= preds[0] + 1;
+					preds[2] <= preds[2] + 1;
 					pc <= jump_dest;
 
 					fetch_enabled <= 1;
@@ -246,7 +237,9 @@ module core
 					write_rstn <= execute_rstn;
 				end else begin
 					if (pred_succeed) begin
-						bht[pc[7:0]] <= {f_bh, t_bh};
+						bht[pc_e[7:0]] <= t_bh;
+						preds[0] <= preds[0] + 1;
+						preds[1] <= preds[1] + 1;
 					end
 
 					pc <= (is_jump_f) ? pred_jump_dest : pc + 1;
