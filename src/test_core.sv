@@ -20,7 +20,7 @@ module test_core();
       $display("difference message format");
 
       clk = 0;
-      for (i=0; i<10110; i++) begin
+      for (i=0; i<9750; i++) begin
         #10
         clk = ~clk;
         if (state == 0 && pc == 35) begin

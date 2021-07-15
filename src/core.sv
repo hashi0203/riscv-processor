@@ -138,6 +138,32 @@ module core
 
 	 			.regs_out(regs) );
 
+		// branch prediction
+		wire [6:0] opcode = instr_fd_out[6:0];
+		wire _jal         = (opcode == 7'b1101111);
+		wire _jalr        = (opcode == 7'b1100111);
+		wire _cond_jump   = (opcode == 7'b1100011);
+		wire is_jump_f    = (_jal || _jalr || _cond_jump);
+
+		reg [2:0]  bht  [255:0];
+		reg [55:0] btac [255:0];
+
+		wire [31:0] pred_jump_dest = (bht[pc[7:0]][2:1] == 2'b11 && btac[pc[7:0]][55:32] == pc[31:8]) ?
+																	btac[pc[7:0]][31:0] : pc + 1;
+
+		wire is_jump_e = (execute_rstn == 1 && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
+		wire pred_succeed = (is_jump_e == 1 && jump_dest == pc_fd_in);
+		wire pred_fail = (is_jump_e == 1 && jump_dest != pc_fd_in);
+		wire [31:0] pc_e = instr_de.pc;
+		wire [1:0]  t_bh = (bht[pc_e[7:0]][1:0] == 2'b00) ? 2'b01 :
+									 		 (bht[pc_e[7:0]][1:0] == 2'b01) ? 2'b10 :
+									 		 2'b11;
+		wire [1:0] nt_bh = (bht[pc_e[7:0]][1:0] == 2'b11) ? 2'b10 :
+											 (bht[pc_e[7:0]][1:0] == 2'b10) ? 2'b01 :
+											 2'b00;
+		wire f_bh = (bht[pc_e[7:0]][2] || (is_jump_e && !pred_succeed));
+
+		integer i;
 		task init;
 			begin
 				pc <= 32'b0;
@@ -153,6 +179,11 @@ module core
 				decode_rstn <= 0;
 				execute_rstn <= 0;
 				write_rstn <= 0;
+
+				for (i=0; i<256; i++) begin
+						bht[i]  <= 3'b0;
+						btac[i] <= 56'b0;
+				end
  			end
 		endtask
 
@@ -169,10 +200,10 @@ module core
 				// rs1_de_in <= rs1_data;
 				// rs2_de_in <= rs2_data;
 
-				rs1_de_in <= (rs1_addr == instr_de.rd) ? rd_ew_out :
+				rs1_de_in <= (execute_rstn == 1 && rs1_addr == instr_de.rd) ? rd_ew_out :
 										//  (rs1_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs1_data;
-				rs2_de_in <= (rs2_addr == instr_de.rd) ? rd_ew_out :
+				rs2_de_in <= (execute_rstn == 1 && rs2_addr == instr_de.rd) ? rd_ew_out :
 										//  (rs2_addr == instr_ew.rd) ? rd_ew_in  :
 										 rs2_data;
 			end
@@ -196,33 +227,29 @@ module core
 			regs_out <= regs;
 			if (rstn) begin
 
-				if (is_stall) begin
+				if (pred_fail) begin
+					bht[pc_e[7:0]] <= {f_bh, nt_bh};
+					if (is_jump) begin
+						btac[pc_e[7:0]] <= {pc_e[31:8], jump_dest};
+					end
+
 					pc <= jump_dest;
-					is_stall <= 0;
 
 					fetch_enabled <= 1;
-					decode_enabled <= fetch_enabled;
-					execute_enabled <= decode_enabled;
+					decode_enabled <= 0;
+					execute_enabled <= 0;
 					write_enabled <= execute_enabled;
 
 					fetch_rstn <= 1;
-					decode_rstn <= fetch_rstn;
-					execute_rstn <= decode_rstn;
-					write_rstn <= execute_rstn;
-				end else if (may_jump) begin
-					is_stall <= 1;
-
-					fetch_enabled <= 0;
-					decode_enabled <= 0;
-					execute_enabled <= decode_enabled;
-					write_enabled <= execute_enabled;
-
-					fetch_rstn <= 0;
 					decode_rstn <= 0;
-					execute_rstn <= decode_rstn;
+					execute_rstn <= 0;
 					write_rstn <= execute_rstn;
 				end else begin
-					pc <= pc + 1;
+					if (pred_succeed) begin
+						bht[pc[7:0]] <= {f_bh, t_bh};
+					end
+
+					pc <= (is_jump_f) ? pred_jump_dest : pc + 1;
 
 					decode_enabled <= fetch_enabled;
 					execute_enabled <= decode_enabled;

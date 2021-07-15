@@ -17,6 +17,13 @@ module memory
 
 	assign r_data = mem[addr];
 
+	// integer i;
+	// initial begin
+	// 	for (i=0; i<1024; i++) begin
+	// 			mem[i] <= 0;
+	// 	end
+	// end
+
 	always @(posedge clk) begin
 		if(rstn) begin
 			if(w_enabled) begin
