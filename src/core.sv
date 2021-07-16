@@ -40,8 +40,9 @@ module core
   reg [31:0] instr_fd_in;
 
   instructions instr_de;
-  wire [4:0] rs1_addr;
-  wire [4:0] rs2_addr;
+  wire [4:0]   rs1_addr;
+  wire [4:0]   rs2_addr;
+  wire [11:0]  csr_addr;
 
   decode _decode
     ( .clk(clk),
@@ -53,7 +54,8 @@ module core
       .completed(decode_completed),
       .instr(instr_de),
       .rs1(rs1_addr),
-      .rs2(rs2_addr) );
+      .rs2(rs2_addr),
+      .csr(csr_addr) );
 
   // execute
   reg  execute_enabled;
@@ -62,11 +64,13 @@ module core
 
   reg [31:0] rs1_de_in;
   reg [31:0] rs2_de_in;
+  reg [31:0] csr_de_in;
 
   instructions instr_ew;
   // reg  [31:0] rs1_ew_out;
   // reg  [31:0] rs2_ew_out;
   wire [31:0] rd_ew_out;
+  wire [31:0] csrd_ew_out;
   wire        is_jump;
   wire [31:0] jump_dest;
 
@@ -78,6 +82,7 @@ module core
       .instr(instr_de),
       .rs1(rs1_de_in),
       .rs2(rs2_de_in),
+      .csr(csr_de_in),
 
       .completed(execute_completed),
       .instr_out(instr_ew),
@@ -85,6 +90,7 @@ module core
       // .rs2_out(rs2_ew_out),
 
       .rd(rd_ew_out),
+      .csrd(csrd_ew_out),
       .is_jump(is_jump),
       .jump_dest(jump_dest) );
 
@@ -95,21 +101,30 @@ module core
   wire write_completed;
 
   reg [31:0]  rd_ew_in;
+  reg [31:0]  csrd_ew_in;
 
   wire        reg_w_enabled;
   wire [4:0]  reg_w_addr;
   wire [31:0] reg_w_data;
+
+  wire        csr_w_enabled;
+  wire [4:0]  csr_w_addr;
+  wire [31:0] csr_w_data;
 
   write _write
     ( .clk(clk),
       .rstn(rstn & write_rstn),
       .enabled(write_enabled),
       .instr(instr_ew),
-      .data(rd_ew_in),
+      .reg_data(rd_ew_in),
+      .csr_data(csrd_ew_in),
 
       .reg_w_enabled(reg_w_enabled),
       .reg_w_addr(reg_w_addr),
       .reg_w_data(reg_w_data),
+      .csr_w_enabled(csr_w_enabled),
+      .csr_w_addr(csr_w_addr),
+      .csr_w_data(csr_w_data),
       .completed(write_completed) );
 
   wire [31:0] rs1_data;
@@ -131,6 +146,20 @@ module core
       .w_data(reg_w_data),
 
       .regs_out(regs) );
+
+  wire [31:0] csr_data;
+
+  csr _csr
+    ( .clk(clk),
+      .rstn(rstn),
+
+      .r_enabled(decode_enabled),
+      .csr_addr(csr_addr),
+      .csr_data(csr_data),
+
+      .w_enabled(csr_w_enabled),
+      .w_addr(csr_w_addr),
+      .w_data(csr_w_data) );
 
   // branch prediction (Two-level adaptive predictor)
   wire [6:0] opcode = instr_fd_out[6:0];
@@ -206,6 +235,8 @@ module core
                    rd_ew_out : rs1_data;
       rs2_de_in <= (execute_enabled && rs2_addr == instr_de.rd) ?
                    rd_ew_out : rs2_data;
+      csr_de_in <= (execute_enabled && csr_addr == instr_de.imm) ?
+                   csrd_ew_out : csr_data;
       global_pred_de <= global_pred_fd;
     end
   endtask
@@ -213,6 +244,7 @@ module core
   task set_ew_reg;
     begin
       rd_ew_in <= rd_ew_out;
+      csrd_ew_in <= csrd_ew_out;
     end
   endtask
 

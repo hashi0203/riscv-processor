@@ -9,6 +9,7 @@ module alu
     input  instructions instr,
     input  reg  [31:0]  rs1,
     input  reg  [31:0]  rs2,
+    input  reg  [31:0]  csr,
 
     output reg          completed,
 
@@ -70,12 +71,12 @@ module alu
       // instr.fencei ? :
       // instr.ecall  ? :
       // instr.ebreak ? :
-      // instr.csrrw  ? :
-      // instr.csrrs  ? :
-      // instr.csrrc  ? :
-      // instr.csrrwi ? :
-      // instr.csrrsi ? :
-      // instr.csrrci ? :
+      instr.csrrw  ? rs1 :
+      instr.csrrs  ? csr | rs1 :
+      instr.csrrc  ? csr & ~rs1 :
+      instr.csrrwi ? {27'b0, instr.rs1} :
+      instr.csrrsi ? csr | {27'b0, instr.rs1} :
+      instr.csrrci ? csr & ~{27'b0, instr.rs1} :
 
       instr.mul    ? _mulss[31:0] :
       instr.mulh   ? _mulss[63:32] :

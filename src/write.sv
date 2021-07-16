@@ -7,11 +7,15 @@ module write
     input  wire         enabled,
 
     input  instructions instr,
-    input  wire [31:0]  data,
+    input  wire [31:0]  reg_data,
+    input  wire [31:0]  csr_data,
 
     output wire         reg_w_enabled,
     output wire [4:0]   reg_w_addr,
     output wire [31:0]  reg_w_data,
+    output wire         csr_w_enabled,
+    output wire [11:0]  csr_w_addr,
+    output wire [31:0]  csr_w_data,
     output wire         completed );
 
   reg _completed;
@@ -19,7 +23,11 @@ module write
 
   assign reg_w_enabled = enabled && (instr.rd != 5'b0);
   assign reg_w_addr = instr.rd;
-  assign reg_w_data = data;
+  assign reg_w_data = reg_data;
+
+  assign csr_w_enabled = enabled && (instr.is_csr);
+  assign csr_w_addr = instr.imm;
+  assign csr_w_data = csr_data;
 
   always @(posedge clk) begin
     if (rstn) begin

@@ -8,6 +8,7 @@ typedef struct {
   reg [4:0]  rs1;
   reg [4:0]  rs2;
   reg [31:0] imm;
+  reg [31:0] zimm;
   reg [31:0] pc;
 
   // rv32i
@@ -78,6 +79,8 @@ typedef struct {
   // control flags
   reg        is_store;
   reg        is_load;
+  reg        is_csr;
+  reg        is_privileged;
   reg        is_conditional_jump;
 } instructions;
 
