@@ -382,7 +382,7 @@ module core
       _mip_reg <= 32'b0;
       _mie_reg <= 32'b0;
       // _mtvec   <= 32'b0;
-      _mtvec   <= {30'd42, 2'b0};
+      _mtvec   <= {30'd47, 2'b0};
       _mcause  <= 32'b0;
       _mepc    <= 32'b0;
       _mtval   <= 32'b0;
@@ -412,7 +412,7 @@ module core
   always @(posedge clk) begin
     pc_out <= pc;
     rd_out <= rd_ew_out;
-    completed <= instr_ew.pc == 32'd36;
+    completed <= instr_ew.pc == 32'd43;
 
     if (rstn) begin
       if (state) begin

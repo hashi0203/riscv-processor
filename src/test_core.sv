@@ -21,7 +21,7 @@ module test_core();
     $display("difference message format");
 
     clk = 0;
-    for (i=0; i<9000; i++) begin
+    for (i=0; i<20000; i++) begin
       #10
       clk = ~clk;
       if (completed) begin
