@@ -27,10 +27,10 @@ module test_core();
     for (i=0; i<20000; i++) begin
       #10
       clk = ~clk;
-      if (i==100) begin
+      if (i==1000) begin
         ext_intr = 1;
       end
-      if (i==200) begin
+      if (i==1200) begin
         ext_intr = 0;
       end
       if (completed) begin

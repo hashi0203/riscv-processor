@@ -536,7 +536,7 @@ module core
           set_ew_reg();
         end
 
-        if (cpu_mode == 2'd0 && !is_interrupted) begin
+        if (cpu_mode == 2'd0 && execute_enabled && !is_interrupted) begin
           pc_when_interrupted <= jump_dest;
         end
       end // if (state)
