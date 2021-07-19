@@ -24,7 +24,7 @@ module test_core();
     clk = 0;
     ext_intr = 0;
     timer_intr = 0;
-    for (i=0; i<20000; i++) begin
+    for (i=0; i<30000; i++) begin
       #10
       clk = ~clk;
       if (i==1000) begin

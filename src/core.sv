@@ -211,7 +211,7 @@ module core
         12'h342: read_csr = {1'b1, csr.mcause};
         12'h343: read_csr = {1'b1, csr.mtval};
         12'h344: read_csr = {1'b1, csr.mip};
-        default: read_csr = {1'b0, 32'b0};
+        default: read_csr = {1'b0, 32'b1};
       endcase
     end
   endfunction
@@ -300,7 +300,7 @@ module core
   task set_csr_when_exception;
     begin
       csr.mcause  <= {28'b0, exception_code};
-      csr.mepc    <= pc_when_exception + 1;
+      csr.mepc    <= pc_when_exception;
       csr.mtval   <= exception_tval;
       set_mstatus_by_trap();
     end
@@ -542,7 +542,7 @@ module core
             cpu_mode <= 2'd0;
             set_mstatus_by_mret();
 
-            pc <= csr.mepc;
+            pc <= (csr_w_enabled && csr_w_addr == 12'h341) ? csr_w_data : csr.mepc;
             // pc <= _mepc;
             flush_stages_when_mret();
           end else begin
