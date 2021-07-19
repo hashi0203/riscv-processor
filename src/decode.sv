@@ -11,27 +11,34 @@ module decode
     output wire         completed,
     output instructions instr,
     output wire [4:0]   rs1,
-    output wire [4:0]   rs2 );
+    output wire [4:0]   rs2,
+    output wire [11:0]  csr );
 
 
-  wire [6:0] funct7 = instr_raw[31:25];
-  wire [4:0] _rs2   = instr_raw[24:20];
-  wire [4:0] _rs1   = instr_raw[19:15];
-  wire [2:0] funct3 = instr_raw[14:12];
-  wire [4:0] _rd    = instr_raw[11:7];
-  wire [6:0] opcode = instr_raw[6:0];
+  wire [6:0] funct7   = instr_raw[31:25];
+  wire [4:0] _rs2     = instr_raw[24:20];
+  wire [4:0] _rs1     = instr_raw[19:15];
+  wire [2:0] funct3   = instr_raw[14:12];
+  wire [4:0] _rd      = instr_raw[11:7];
+  wire [6:0] opcode   = instr_raw[6:0];
 
-  wire       r_type = (opcode == 7'b0110011 | opcode == 7'b1010011);
-  wire       i_type = (opcode == 7'b1100111 | opcode == 7'b0000011 | opcode == 7'b0010011 | opcode == 7'b0000111);
-  wire       s_type = (opcode == 7'b0100011 | opcode == 7'b0100111);
-  wire       b_type = (opcode == 7'b1100011);
-  wire       u_type = (opcode == 7'b0110111 | opcode == 7'b0010111);
-  wire       j_type = (opcode == 7'b1101111);
+  wire _is_privileged = (opcode == 7'b1110011 && (funct3 == 3'b000 || funct3 == 3'b100));
+  wire       _is_csr  = (opcode == 7'b1110011 && !_is_privileged);
+  wire       r_type   = (opcode == 7'b0110011 || opcode == 7'b1010011 || _is_privileged);
+  wire       i_type   = (opcode == 7'b1100111 || opcode == 7'b0000011 || opcode == 7'b0010011 || opcode == 7'b0000111 || _is_csr);
+  wire       s_type   = (opcode == 7'b0100011 || opcode == 7'b0100111);
+  wire       b_type   = (opcode == 7'b1100011);
+  wire       u_type   = (opcode == 7'b0110111 || opcode == 7'b0010111);
+  wire       j_type   = (opcode == 7'b1101111);
+
+  wire      need_zimm = _is_csr && (funct3 == 3'b101 || funct3 == 3'b110 || funct3 == 3'b111);
 
   // j and u do not require rs1
-  assign rs1 = enabled && (r_type || i_type || s_type || b_type) ? _rs1 : 5'b00000;
+  assign rs1 = enabled && (r_type || i_type || s_type || b_type) && !need_zimm ? _rs1 : 5'b00000;
   // j, u, and i do not require rs2
   assign rs2 = enabled && (r_type || s_type || b_type) ? _rs2 : 5'b00000;
+
+  assign csr = _is_csr ? instr_raw[31:25] : 12'b0;
 
   wire _lui    = (opcode == 7'b0110111);
   wire _auipc  = (opcode == 7'b0010111);
@@ -130,17 +137,18 @@ module decode
       if (enabled) begin
         _completed <= 1;
 
-        instr.rd  <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
-        instr.rs1 <= (r_type || i_type || s_type || b_type) ? _rs1 : 5'b00000;
-        instr.rs2 <= (r_type || s_type || b_type) ? _rs2 : 5'b00000;
-        instr.imm <= i_type ? {_imm_pn, instr_raw[31:20]} :
+        instr.rd   <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
+        instr.rs1  <= (r_type || i_type || s_type || b_type) ? _rs1 : 5'b00000;
+        instr.rs2  <= (r_type || s_type || b_type) ? _rs2 : 5'b00000;
+        instr.imm  <= i_type ? {_imm_pn, instr_raw[31:20]} :
                       s_type ? {_imm_pn, instr_raw[31:25], instr_raw[11:7]} :
                       b_type ? {_imm_pn[18:0], instr_raw[31], instr_raw[7], instr_raw[30:25], instr_raw[11:8], 1'b0} :
                       u_type ? {instr_raw[31:12], 12'b0} :
                       j_type ? {_imm_pn[10:0], instr_raw[31], instr_raw[19:12], instr_raw[20], instr_raw[30:21], 1'b0} :
                       32'b0;
-        instr.pc  <= pc;
-        instr.raw <= instr_raw;
+        instr.pc   <= pc;
+        instr.zimm <= need_zimm ? {27'b0, _rs1} : 32'b0;
+        instr.raw  <= instr_raw;
 
         instr.lui    <= _lui;
         instr.auipc  <= _auipc;
@@ -211,6 +219,7 @@ module decode
         // control flags
         instr.is_store            <= _is_store;
         instr.is_load             <= _is_load;
+        instr.is_csr              <= _is_csr;
         instr.is_conditional_jump <= _is_conditional_jump;
         instr.is_illegal_instr    <= _is_illegal_instr;
       end

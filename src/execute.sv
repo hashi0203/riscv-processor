@@ -9,6 +9,7 @@ module execute
     input  instructions instr,
     input  reg [31:0]   rs1,
     input  reg [31:0]   rs2,
+    input  reg [31:0]   csr,
 
     output wire         completed,
     output instructions instr_out,
@@ -16,6 +17,7 @@ module execute
     // output reg [31:0]   rs2_out,
 
     output wire [31:0]  rd,
+    output wire [31:0]  csrd,
     output wire         is_jump,
     output wire [31:0]  jump_dest );
 
@@ -28,6 +30,7 @@ module execute
       .instr(instr),
       .rs1(rs1),
       .rs2(rs2),
+      .csr(csr),
       .completed(alu_completed),
       .rd(alu_rd) );
 
@@ -48,7 +51,10 @@ module execute
       .w_enabled(instr.is_store),
       .w_data(rs2) );
 
-  assign rd        = enabled ? (instr.is_load ? r_data : alu_rd) : 32'b0;
+  assign rd        = enabled ? (instr.is_load ? r_data :
+                                instr.is_csr ? csr :
+                                alu_rd) : 32'b0;
+  assign csrd      = enabled ? (instr.is_csr ? alu_rd : csr) : 32'b0;
   assign is_jump   = enabled && (instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1));
   assign jump_dest = enabled ?
                      (instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :

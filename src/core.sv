@@ -46,6 +46,7 @@ module core
   instructions instr_de;
   wire [4:0]   rs1_addr;
   wire [4:0]   rs2_addr;
+  wire [11:0]  csr_addr;
 
   decode _decode
     ( .clk(clk),
@@ -57,7 +58,8 @@ module core
       .completed(decode_completed),
       .instr(instr_de),
       .rs1(rs1_addr),
-      .rs2(rs2_addr) );
+      .rs2(rs2_addr),
+      .csr(csr_addr) );
 
   // execute
   reg  execute_enabled;
@@ -66,11 +68,13 @@ module core
 
   reg [31:0] rs1_de_in;
   reg [31:0] rs2_de_in;
+  reg [31:0] csr_de_in;
 
   instructions instr_ew;
   // reg  [31:0] rs1_ew_out;
   // reg  [31:0] rs2_ew_out;
   wire [31:0] rd_ew_out;
+  wire [31:0] csrd_ew_out;
   wire        is_jump;
   wire [31:0] jump_dest;
 
@@ -82,6 +86,7 @@ module core
       .instr(instr_de),
       .rs1(rs1_de_in),
       .rs2(rs2_de_in),
+      .csr(csr_de_in),
 
       .completed(execute_completed),
       .instr_out(instr_ew),
@@ -89,6 +94,7 @@ module core
       // .rs2_out(rs2_ew_out),
 
       .rd(rd_ew_out),
+      .csrd(csrd_ew_out),
       .is_jump(is_jump),
       .jump_dest(jump_dest) );
 
@@ -99,21 +105,30 @@ module core
   wire write_completed;
 
   reg [31:0]  rd_ew_in;
+  reg [31:0]  csrd_ew_in;
 
   wire        reg_w_enabled;
   wire [4:0]  reg_w_addr;
   wire [31:0] reg_w_data;
+
+  wire        csr_w_enabled;
+  wire [11:0] csr_w_addr;
+  wire [31:0] csr_w_data;
 
   write _write
     ( .clk(clk),
       .rstn(rstn & write_rstn),
       .enabled(write_enabled),
       .instr(instr_ew),
-      .data(rd_ew_in),
+      .reg_data(rd_ew_in),
+      .csr_data(csrd_ew_in),
 
       .reg_w_enabled(reg_w_enabled),
       .reg_w_addr(reg_w_addr),
       .reg_w_data(reg_w_data),
+      .csr_w_enabled(csr_w_enabled),
+      .csr_w_addr(csr_w_addr),
+      .csr_w_data(csr_w_data),
       .completed(write_completed) );
 
   wire [31:0] rs1_data;
@@ -165,6 +180,172 @@ module core
                       (bht[pc_e[7:0]][global_pred_de] == 2'b10) ? 2'b01 :
                       2'b00;
 
+  // csr operation
+  csreg csr;
+
+  task init_csr;
+    begin
+      csr.mstatus_mask <= 32'h601e19aa;
+      csr.mie_mask     <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
+      csr.mip_mask     <= {20'b0, 4'b1000, 4'b1000, 4'b0000};
+
+      csr.mstatus  <= 32'b0;
+      // csr.mie      <= 32'b0;
+      csr.mie      <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
+      // csr.mtvec    <= 32'b0;
+      csr.mtvec    <= {30'd47, 2'b0};
+      csr.mepc     <= 32'b0;
+      csr.mcause   <= 32'b0;
+      csr.mtval    <= 32'b0;
+      csr.mip      <= 32'b0;
+    end
+  endtask
+
+  function [32:0] read_csr(input [11:0] r_addr);
+    begin
+      case (r_addr)
+        12'h300: read_csr = {1'b1, csr.mstatus};
+        12'h304: read_csr = {1'b1, csr.mie};
+        12'h305: read_csr = {1'b1, csr.mtvec};
+        12'h341: read_csr = {1'b1, csr.mepc};
+        12'h342: read_csr = {1'b1, csr.mcause};
+        12'h343: read_csr = {1'b1, csr.mtval};
+        12'h344: read_csr = {1'b1, csr.mip};
+        default: read_csr = {1'b0, 32'b0};
+      endcase
+    end
+  endfunction
+
+  function [32:0] rw_csr
+    ( input        r_enabled,
+      input [11:0] r_addr,
+
+      input        w_enabled,
+      input [4:0]  w_addr,
+      input [31:0] w_data );
+
+    rw_csr = r_enabled ?
+             ((w_enabled && w_addr == r_addr) ? {1'b1, w_data} : read_csr(r_addr)) :
+             33'b0;
+
+    if (w_enabled) begin
+      case (w_addr) // write w_data in csr
+        12'h300: csr.mstatus <= (csr.mstatus & ~csr.mstatus_mask) | (w_data & csr.mstatus_mask);
+        12'h304: csr.mie     <= (csr.mie & ~csr.mie_mask) | (w_data & csr.mie_mask);
+        12'h305: if ((w_data & 32'b11) < 32'd2) begin csr.mtvec <= w_data; end
+        12'h341: csr.mepc    <= w_data;
+        12'h342: csr.mcause  <= w_data;
+        12'h343: csr.mtval   <= w_data;
+        12'h344: csr.mip     <= w_data;
+      endcase
+    end
+  endfunction
+
+  reg         is_csr_valid;
+  // v_csr_data = {is_csr_valid, csr_data};
+  wire [32:0] v_csr_data = rw_csr(decode_enabled, csr_addr, csr_w_enabled, csr_w_addr, csr_w_data);
+
+  wire [31:0] _mip = (csr.mip & csr.mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
+  wire [31:0] _mie = csr.mie & csr.mie_mask;
+
+  wire        _mstatus_tvm  = csr.mstatus[20];
+  wire [1:0]  _mstatus_mpp  = csr.mstatus[12:11];
+  wire        _mstatus_spp  = csr.mstatus[8];
+  wire        _mstatus_mpie = csr.mstatus[7];
+  wire        _mstatus_spie = csr.mstatus[5];
+  wire        _mstatus_mie  = csr.mstatus[3];
+  wire        _mstatus_sie  = csr.mstatus[1];
+
+  wire [31:0] exception_vec_when_interrupted = (_mip[11] && _mie[11]) ? 32'd11 :
+                                               (_mip[3]  && _mie[3] ) ? 32'd3  :
+                                               (_mip[7]  && _mie[7] ) ? 32'd7  :
+                                               // (_mip[9] && _mie[9])? 32'd9:
+                                               // (_mip[1] && _mie[1])? 32'd1:
+                                               // (_mip[5] && _mie[5])? 32'd5:
+                                               32'd0;
+
+  reg        is_exception;
+  reg [3:0]  exception_code;
+  reg [31:0] exception_tval;
+  reg [31:0] pc_when_exception;
+  reg [31:0] pc_when_interrupted;
+
+  // wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3 || (cpu_mode == 2'd3 && _mstatus_mie));
+  wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3);
+
+  task set_mstatus_by_trap;
+    begin
+      csr.mstatus <= {csr.mstatus[31:13],
+                      cpu_mode[1:0],      // mpp
+                      csr.mstatus[10:8],
+                      csr.mstatus[3],     // mpie
+                      csr.mstatus[6:4],
+                      1'b0,               // mie
+                      csr.mstatus[2:0]};
+    end
+  endtask
+
+  task set_mstatus_by_mret;
+    begin
+      csr.mstatus <= {csr.mstatus[31:13],
+                      2'b0,               // mpp
+                      csr.mstatus[10:8],
+                      1'b1,               // mpie
+                      csr.mstatus[6:4],
+                      _mstatus_mpie,      // mie
+                      csr.mstatus[2:0]};
+    end
+  endtask
+
+  task set_csr_when_exception;
+    begin
+      csr.mcause  <= {28'b0, exception_code};
+      csr.mepc    <= pc_when_exception + 1;
+      csr.mtval   <= exception_tval;
+      set_mstatus_by_trap();
+    end
+  endtask
+
+  task set_csr_when_interrupted;
+    begin
+      csr.mcause <= {1'b1, exception_vec_when_interrupted[30:0]};
+      csr.mepc   <= pc_when_interrupted;
+      csr.mtval  <= 32'b0;
+      set_mstatus_by_trap();
+    end
+  endtask
+
+  // raise exception
+  task raise_illegal_instr;
+    begin
+      is_exception      <= 1;
+      exception_code    <= 4'd2;
+      exception_tval    <= instr_de.raw;
+      pc_when_exception <= instr_de.pc;
+    end
+  endtask
+
+  task raise_ebreak;
+    begin
+      is_exception      <= 1;
+      exception_code    <= 4'd3;
+      exception_tval    <= instr_de.pc;
+      pc_when_exception <= instr_de.pc;
+    end
+  endtask
+
+  task raise_ecall;
+    begin
+      is_exception      <= 1'b1;
+      exception_code    <= cpu_mode == 2'd3 ? 4'd11 :
+                           cpu_mode == 2'd0 ? 4'd8  :
+                           5'd16;
+      exception_tval    <= 32'd0;
+      pc_when_exception <= instr_de.pc;
+    end
+   endtask
+
+  // pipeline register
   task set_fd_reg;
     begin
       pc_fd_in       <= pc;
@@ -179,16 +360,21 @@ module core
                         rd_ew_out : rs1_data;
       rs2_de_in      <= (execute_enabled && rs2_addr == instr_de.rd) ?
                         rd_ew_out : rs2_data;
+      csr_de_in      <= (execute_enabled && csr_addr == instr_de.imm) ?
+                        csrd_ew_out : v_csr_data[31:0];
+      is_csr_valid   <= v_csr_data[32:32];
       global_pred_de <= global_pred_fd;
     end
   endtask
 
   task set_ew_reg;
     begin
-      rd_ew_in <= rd_ew_out;
+      rd_ew_in   <= rd_ew_out;
+      csrd_ew_in <= csrd_ew_out;
     end
   endtask
 
+  // pipeline flush
   task flush_fd_reg;
     begin
       pc_fd_in       <= 32'b0;
@@ -279,211 +465,6 @@ module core
     end
   endtask
 
-  csreg csr;
-
-  task init_csr;
-    begin
-      csr.mstatus_mask <= 32'h601e19aa;
-      csr.mie_mask     <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
-      csr.mip_mask     <= {20'b0, 4'b1000, 4'b1000, 4'b0000};
-
-      csr.mstatus  <= 32'b0;
-      // csr.mie      <= 32'b0;
-      csr.mie      <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
-      // csr.mtvec    <= 32'b0;
-      csr.mtvec    <= {30'd47, 2'b0};
-      csr.mepc     <= 32'b0;
-      csr.mcause   <= 32'b0;
-      csr.mtval    <= 32'b0;
-      csr.mip      <= 32'b0;
-    end
-  endtask
-
-  function [32:0] read_csr(input [11:0] r_addr);
-    begin
-      case (r_addr)
-        12'h300: read_csr = {1'b1, csr.mstatus};
-        12'h304: read_csr = {1'b1, csr.mie};
-        12'h305: read_csr = {1'b1, csr.mtvec};
-        12'h341: read_csr = {1'b1, csr.mepc};
-        12'h342: read_csr = {1'b1, csr.mcause};
-        12'h343: read_csr = {1'b1, csr.mtval};
-        12'h344: read_csr = {1'b1, csr.mip};
-        default: read_csr = {1'b0, 32'b0};
-      endcase
-    end
-  endfunction
-
-  // task write_csr(input [11:0] w_addr, input [31:0] w_data);
-  //   begin
-  //     case (w_addr)
-  //       12'h300: csr.mstatus <= (csr.mstatus & ~csr.mstatus_mask) | (w_data & csr.mstatus_mask);
-  //       12'h304: csr.mie     <= (csr.mie & ~csr.mie_mask) | (w_data & csr.mie_mask);
-  //       12'h305: if ((w_data & 32'b11) < 32'd2) begin csr.mtvec <= w_data; end
-  //       12'h341: csr.mepc    <= w_data;
-  //       12'h342: csr.mcause  <= w_data;
-  //       12'h343: csr.mtval   <= w_data;
-  //       12'h344: csr.mip     <= w_data;
-  //     endcase
-  //   end
-  // endtask
-
-  function [32:0] rw_csr
-    ( input        r_enabled,
-      input [11:0] r_addr,
-
-      input        w_enabled,
-      input [4:0]  w_addr,
-      input [31:0] w_data);
-
-    rw_csr = r_enabled ?
-             ((w_enabled && w_addr == r_addr) ? {1'b1, w_data} : read_csr(r_addr)) :
-             33'b0;
-
-    if(w_enabled) begin
-      case (w_addr) // write w_data in csr
-        12'h300: csr.mstatus <= (csr.mstatus & ~csr.mstatus_mask) | (w_data & csr.mstatus_mask);
-        12'h304: csr.mie     <= (csr.mie & ~csr.mie_mask) | (w_data & csr.mie_mask);
-        12'h305: if ((w_data & 32'b11) < 32'd2) begin csr.mtvec <= w_data; end
-        12'h341: csr.mepc    <= w_data;
-        12'h342: csr.mcause  <= w_data;
-        12'h343: csr.mtval   <= w_data;
-        12'h344: csr.mip     <= w_data;
-      endcase
-    end
-  endfunction
-
-  // reg  [31:0] _mip_reg;
-  // wire [31:0] _mip_mask = {20'b0, 4'b1000, 4'b1000, 4'b0000};
-  // wire [31:0] _mip = (_mip_reg & _mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
-  // reg  [31:0] _mie_reg;
-  // wire [31:0] _mie_mask = {20'b0, 4'b1010, 4'b1010, 4'b1010};
-  // wire [31:0] _mie = _mie_reg & _mie_mask;
-  wire [31:0] _mip = (csr.mip & csr.mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
-  wire [31:0] _mie = csr.mie & csr.mie_mask;
-
-  // reg  [31:0] _mtvec;
-  // reg  [31:0] _mcause;
-  // reg  [31:0] _mepc;
-  // reg  [31:0] _mtval;
-  // reg  [31:0] _mstatus;
-  // wire        _mstatus_tvm  = _mstatus[20];
-  // wire [1:0]  _mstatus_mpp  = _mstatus[12:11];
-  // wire        _mstatus_spp  = _mstatus[8];
-  // wire        _mstatus_mpie = _mstatus[7];
-  // wire        _mstatus_spie = _mstatus[5];
-  // wire        _mstatus_mie  = _mstatus[3];
-  // wire        _mstatus_sie  = _mstatus[1];
-  wire        _mstatus_tvm  = csr.mstatus[20];
-  wire [1:0]  _mstatus_mpp  = csr.mstatus[12:11];
-  wire        _mstatus_spp  = csr.mstatus[8];
-  wire        _mstatus_mpie = csr.mstatus[7];
-  wire        _mstatus_spie = csr.mstatus[5];
-  wire        _mstatus_mie  = csr.mstatus[3];
-  wire        _mstatus_sie  = csr.mstatus[1];
-
-  wire [31:0] exception_vec_when_interrupted = (_mip[11] && _mie[11]) ? 32'd11 :
-                                               (_mip[3]  && _mie[3] ) ? 32'd3  :
-                                               (_mip[7]  && _mie[7] ) ? 32'd7  :
-                                               // (_mip[9] && _mie[9])? 32'd9:
-                                               // (_mip[1] && _mie[1])? 32'd1:
-                                               // (_mip[5] && _mie[5])? 32'd5:
-                                               32'd0;
-
-  reg        is_exception;
-  reg [3:0]  exception_code;
-  reg [31:0] exception_tval;
-  reg [31:0] pc_when_exception;
-  reg [31:0] pc_when_interrupted;
-
-  // wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3 || (cpu_mode == 2'd3 && _mstatus_mie));
-  wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3);
-
-  task set_mstatus_by_trap;
-    begin
-      // _mstatus <= {_mstatus[31:13],
-      //              cpu_mode[1:0],   // mpp
-      //              _mstatus[10:8],
-      //              _mstatus[3],     // mpie
-      //              _mstatus[6:4],
-      //              1'b0,            // mie
-      //              _mstatus[2:0]};
-      csr.mstatus <= {csr.mstatus[31:13],
-                      cpu_mode[1:0],      // mpp
-                      csr.mstatus[10:8],
-                      csr.mstatus[3],     // mpie
-                      csr.mstatus[6:4],
-                      1'b0,               // mie
-                      csr.mstatus[2:0]};
-    end
-  endtask
-
-  task set_mstatus_by_mret;
-    begin
-      // _mstatus <= {_mstatus[31:13],
-      //              2'b0,            // mpp
-      //              _mstatus[10:8],
-      //              1'b1,            // mpie
-      //              _mstatus[6:4],
-      //              _mstatus_mpie,   // mie
-      //              _mstatus[2:0]};
-      csr.mstatus <= {csr.mstatus[31:13],
-                      2'b0,               // mpp
-                      csr.mstatus[10:8],
-                      1'b1,               // mpie
-                      csr.mstatus[6:4],
-                      _mstatus_mpie,   // mie
-                      csr.mstatus[2:0]};
-    end
-  endtask
-
-  task set_csr_when_exception;
-    begin
-      csr.mcause  <= {28'b0, exception_code};
-      csr.mepc    <= pc_when_exception + 1;
-      csr.mtval   <= exception_tval;
-      set_mstatus_by_trap();
-    end
-  endtask
-
-  task set_csr_when_interrupted;
-    begin
-      csr.mcause <= {1'b1, exception_vec_when_interrupted[30:0]};
-      csr.mepc   <= pc_when_interrupted;
-      csr.mtval  <= 32'b0;
-      set_mstatus_by_trap();
-    end
-  endtask
-
-  task raise_illegal_instr;
-    begin
-      is_exception      <= 1;
-      exception_code    <= 4'd2;
-      exception_tval    <= instr_de.raw;
-      pc_when_exception <= instr_de.pc;
-    end
-  endtask
-
-  task raise_ebreak;
-    begin
-      is_exception      <= 1;
-      exception_code    <= 4'd3;
-      exception_tval    <= instr_de.pc;
-      pc_when_exception <= instr_de.pc;
-    end
-  endtask
-
-  task raise_ecall;
-    begin
-      is_exception      <= 1'b1;
-      exception_code    <= cpu_mode == 2'd3 ? 4'd11 :
-                           cpu_mode == 2'd0 ? 4'd8  :
-                           5'd16;
-      exception_tval    <= 32'd0;
-      pc_when_exception <= instr_de.pc;
-    end
-   endtask
-
   integer i;
   task init;
     begin
@@ -515,23 +496,6 @@ module core
       global_pred_fd <= 2'b0;
       global_pred_de <= 2'b0;
 
-      // _mip_reg <= 32'b0;
-      // // _mie_reg <= 32'b0;
-      // _mie_reg <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
-      // // _mtvec   <= 32'b0;
-      // _mtvec   <= {30'd47, 2'b0};
-      // _mcause  <= 32'b0;
-      // _mepc    <= 32'b0;
-      // _mtval   <= 32'b0;
-      // _mstatus <= 32'b0;
-      // _medeleg <= 32'b0;
-      // _mideleg <= 32'b0;
-      // _mie <= 32'b0;
-      // _mcounteren <= 32'b0;
-      // _mscratch <= 32'b0;
-      // _mip_shadow <= 32'b0;
-      // _minstret_full <= 64'h0;
-
       init_csr();
 
       is_exception        <= 0;
@@ -559,20 +523,16 @@ module core
         fetch_enabled <= 1;
         fetch_rstn    <= 1;
 
-        // pc は全部 >> 2 していいかも
         if (is_exception) begin
-          // pc <= {_mtvec[31:2], 2'b0};
           pc <= {2'b0, csr.mtvec[31:2]};
           set_csr_when_exception();
         end else begin // interrupted
-          // pc <= (_mtvec[1:0] == 2'b0) ? {_mtvec[31:2], 2'b0} :
-          //       {_mtvec[31:2], 2'b0} + (exception_vec_when_interrupted[4:0] << 2);
           pc <= (csr.mtvec[1:0] == 2'b0) ? {2'b0, csr.mtvec[31:2]} :
                 {2'b0, csr.mtvec[31:2]} + {27'b0, exception_vec_when_interrupted[4:0]};
           set_csr_when_interrupted();
         end
       end else begin // if (state)
-        if (execute_enabled && instr_de.is_illegal_instr) begin
+        if (execute_enabled && (instr_de.is_illegal_instr || (instr_de.is_csr && !is_csr_valid))) begin
           state <= 1;
           raise_illegal_instr();
           flush_all_stages();
