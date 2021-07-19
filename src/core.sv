@@ -211,7 +211,7 @@ module core
         12'h342: read_csr = {1'b1, csr.mcause};
         12'h343: read_csr = {1'b1, csr.mtval};
         12'h344: read_csr = {1'b1, csr.mip};
-        default: read_csr = {1'b0, 32'b1};
+        default: read_csr = {1'b0, 32'b0};
       endcase
     end
   endfunction
