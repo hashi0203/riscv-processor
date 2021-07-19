@@ -9,13 +9,12 @@ module core
     input  wire       timer_intr,
 
     output reg [31:0] pc_out,
-    output reg [31:0] rd_out,
     output reg [31:0] preds [2:0],
     output reg [31:0] regs [31:0],
     output reg        completed );
 
   reg [31:0] pc;
-  reg        state; // 0: default, 1: trap (exception, interrupt)
+  reg        state;    // 0: default, 1: trap (exception, interrupt)
   reg [1:0]  cpu_mode; // 0: user, 3: machine
 
   // fetch
@@ -168,18 +167,18 @@ module core
 
   task set_fd_reg;
     begin
-      pc_fd_in <= pc;
-      instr_fd_in <= instr_fd_out;
+      pc_fd_in       <= pc;
+      instr_fd_in    <= instr_fd_out;
       global_pred_fd <= global_pred;
     end
   endtask
 
   task set_de_reg;
     begin
-      rs1_de_in <= (execute_enabled && rs1_addr == instr_de.rd) ?
-                   rd_ew_out : rs1_data;
-      rs2_de_in <= (execute_enabled && rs2_addr == instr_de.rd) ?
-                   rd_ew_out : rs2_data;
+      rs1_de_in      <= (execute_enabled && rs1_addr == instr_de.rd) ?
+                        rd_ew_out : rs1_data;
+      rs2_de_in      <= (execute_enabled && rs2_addr == instr_de.rd) ?
+                        rd_ew_out : rs2_data;
       global_pred_de <= global_pred_fd;
     end
   endtask
@@ -192,16 +191,16 @@ module core
 
   task flush_fd_reg;
     begin
-      pc_fd_in <= 32'b0;
-      instr_fd_in <= '{ default:0 };
+      pc_fd_in       <= 32'b0;
+      instr_fd_in    <= '{ default:0 };
       global_pred_fd <= 2'b0;
     end
   endtask
 
   task flush_de_reg;
     begin
-      rs1_de_in <= 32'b0;
-      rs2_de_in <= 32'b0;
+      rs1_de_in      <= 32'b0;
+      rs2_de_in      <= 32'b0;
       global_pred_de <= 2'b0;
     end
   endtask
@@ -218,6 +217,24 @@ module core
       execute_enabled <= 0;
       write_enabled   <= execute_enabled;
 
+      decode_rstn     <= 0;
+      execute_rstn    <= 0;
+      write_rstn      <= execute_rstn;
+
+      flush_fd_reg();
+      flush_de_reg();
+      set_ew_reg();
+    end
+  endtask
+
+  task flush_stages_when_interrupted;
+    begin
+      fetch_enabled   <= 0;
+      decode_enabled  <= 0;
+      execute_enabled <= 0;
+      write_enabled   <= execute_enabled;
+
+      fetch_rstn      <= 0;
       decode_rstn     <= 0;
       execute_rstn    <= 0;
       write_rstn      <= execute_rstn;
@@ -294,8 +311,10 @@ module core
   reg [3:0]  exception_code;
   reg [31:0] exception_tval;
   reg [31:0] pc_when_exception;
+  reg [31:0] pc_when_interrupted;
 
-  reg        is_interrupt;
+  // wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3 || (cpu_mode == 2'd3 && _mstatus_mie));
+  wire       is_interrupted = |(_mip & _mie) && (cpu_mode < 2'd3);
 
   task set_mstatus_by_trap;
     begin
@@ -321,19 +340,19 @@ module core
     end
   endtask
 
-  task set_csr_for_exception;
+  task set_csr_when_exception;
     begin
       _mcause  <= {28'b0, exception_code};
-      _mepc    <= pc_when_exception;
+      _mepc    <= pc_when_exception + 1;
       _mtval   <= exception_tval;
       set_mstatus_by_trap();
     end
   endtask
 
-  task set_csr_for_interrupt;
+  task set_csr_when_interrupted;
     begin
       _mcause <= {1'b1, exception_vec_when_interrupted[30:0]};
-      _mepc   <= pc_when_exception;
+      _mepc   <= pc_when_interrupted;
       _mtval  <= 32'b0;
       set_mstatus_by_trap();
     end
@@ -400,7 +419,8 @@ module core
       global_pred_de <= 2'b0;
 
       _mip_reg <= 32'b0;
-      _mie_reg <= 32'b0;
+      // _mie_reg <= 32'b0;
+      _mie_reg <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
       // _mtvec   <= 32'b0;
       _mtvec   <= {30'd47, 2'b0};
       _mcause  <= 32'b0;
@@ -415,13 +435,11 @@ module core
       // _mip_shadow <= 32'b0;
       // _minstret_full <= 64'h0;
 
-      is_exception      <= 0;
-      exception_code    <= 4'b0;
-      exception_tval    <= 32'b0;
-      pc_when_exception <= 32'b0;
-
-      is_interrupt      <= 0;
-
+      is_exception        <= 0;
+      exception_code      <= 4'b0;
+      exception_tval      <= 32'b0;
+      pc_when_exception   <= 32'b0;
+      pc_when_interrupted <= 32'b0;
     end
   endtask
 
@@ -431,7 +449,6 @@ module core
 
   always @(posedge clk) begin
     pc_out <= pc;
-    rd_out <= rd_ew_out;
     completed <= instr_ew.pc == 32'd43;
 
     if (rstn) begin
@@ -447,15 +464,15 @@ module core
         if (is_exception) begin
           // pc <= {_mtvec[31:2], 2'b0};
           pc <= {2'b0, _mtvec[31:2]};
-          set_csr_for_exception();
-        end else if (is_interrupt) begin
+          set_csr_when_exception();
+        end else begin // interrupted
           // pc <= (_mtvec[1:0] == 2'b0) ? {_mtvec[31:2], 2'b0} :
           //       {_mtvec[31:2], 2'b0} + (exception_vec_when_interrupted[4:0] << 2);
           pc <= (_mtvec[1:0] == 2'b0) ? {2'b0, _mtvec[31:2]} :
                 {2'b0, _mtvec[31:2]} + {27'b0, exception_vec_when_interrupted[4:0]};
-          set_csr_for_interrupt();
+          set_csr_when_interrupted();
         end
-      end else begin
+      end else begin // if (state)
         if (execute_enabled && instr_de.is_illegal_instr) begin
           state <= 1;
           raise_illegal_instr();
@@ -466,7 +483,7 @@ module core
             cpu_mode <= 2'd0;
             set_mstatus_by_mret();
 
-            pc <= _mepc + 1;
+            pc <= _mepc;
             // pc <= _mepc;
             flush_stages_when_mret();
           end else begin
@@ -481,6 +498,9 @@ module core
         end else if (execute_enabled && instr_de.ebreak) begin
           state <= 1;
           raise_ebreak();
+          flush_all_stages();
+        end else if (is_interrupted) begin
+          state <= 1;
           flush_all_stages();
         end else if (pred_fail) begin
           bht[pc_e[7:0]][global_pred_de] <= is_jump ? bh_t : bh_nt;
@@ -515,8 +535,12 @@ module core
           set_de_reg();
           set_ew_reg();
         end
-      end
-    end else begin
+
+        if (cpu_mode == 2'd0 && !is_interrupted) begin
+          pc_when_interrupted <= jump_dest;
+        end
+      end // if (state)
+    end else begin // if (rstn)
       init();
     end
   end
