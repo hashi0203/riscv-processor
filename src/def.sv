@@ -86,4 +86,18 @@ typedef struct {
   reg        is_illegal_instr;
 } instructions;
 
+typedef struct {
+  reg [31:0] mstatus_mask;
+  reg [31:0] mie_mask;
+  reg [31:0] mip_mask;
+
+  reg [31:0] mstatus;
+  reg [31:0] mie;
+  reg [31:0] mtvec;
+  reg [31:0] mepc;
+  reg [31:0] mcause;
+  reg [31:0] mtval;
+  reg [31:0] mip;
+} csreg;
+
 `endif

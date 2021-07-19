@@ -279,25 +279,108 @@ module core
     end
   endtask
 
-  reg  [31:0] _mip_reg;
-  wire [31:0] _mip_mask = {20'b0, 4'b1000, 4'b1000, 4'b0000};
-  wire [31:0] _mip = (_mip_reg & _mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
-  reg  [31:0] _mie_reg;
-  wire [31:0] _mie_mask = {20'b0, 4'b1010, 4'b1010, 4'b1010};
-  wire [31:0] _mie = _mie_reg & _mie_mask;
+  csreg csr;
 
-  reg  [31:0] _mtvec;
-  reg  [31:0] _mcause;
-  reg  [31:0] _mepc;
-  reg  [31:0] _mtval;
-  reg  [31:0] _mstatus;
-  wire        _mstatus_tvm  = _mstatus[20];
-  wire [1:0]  _mstatus_mpp  = _mstatus[12:11];
-  wire        _mstatus_spp  = _mstatus[8];
-  wire        _mstatus_mpie = _mstatus[7];
-  wire        _mstatus_spie = _mstatus[5];
-  wire        _mstatus_mie  = _mstatus[3];
-  wire        _mstatus_sie  = _mstatus[1];
+  task init_csr;
+    begin
+      csr.mstatus_mask <= 32'h601e19aa;
+      csr.mie_mask     <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
+      csr.mip_mask     <= {20'b0, 4'b1000, 4'b1000, 4'b0000};
+
+      csr.mstatus  <= 32'b0;
+      // csr.mie      <= 32'b0;
+      csr.mie      <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
+      // csr.mtvec    <= 32'b0;
+      csr.mtvec    <= {30'd47, 2'b0};
+      csr.mepc     <= 32'b0;
+      csr.mcause   <= 32'b0;
+      csr.mtval    <= 32'b0;
+      csr.mip      <= 32'b0;
+    end
+  endtask
+
+  function [32:0] read_csr(input [11:0] r_addr);
+    begin
+      case (r_addr)
+        12'h300: read_csr = {1'b1, csr.mstatus};
+        12'h304: read_csr = {1'b1, csr.mie};
+        12'h305: read_csr = {1'b1, csr.mtvec};
+        12'h341: read_csr = {1'b1, csr.mepc};
+        12'h342: read_csr = {1'b1, csr.mcause};
+        12'h343: read_csr = {1'b1, csr.mtval};
+        12'h344: read_csr = {1'b1, csr.mip};
+        default: read_csr = {1'b0, 32'b0};
+      endcase
+    end
+  endfunction
+
+  // task write_csr(input [11:0] w_addr, input [31:0] w_data);
+  //   begin
+  //     case (w_addr)
+  //       12'h300: csr.mstatus <= (csr.mstatus & ~csr.mstatus_mask) | (w_data & csr.mstatus_mask);
+  //       12'h304: csr.mie     <= (csr.mie & ~csr.mie_mask) | (w_data & csr.mie_mask);
+  //       12'h305: if ((w_data & 32'b11) < 32'd2) begin csr.mtvec <= w_data; end
+  //       12'h341: csr.mepc    <= w_data;
+  //       12'h342: csr.mcause  <= w_data;
+  //       12'h343: csr.mtval   <= w_data;
+  //       12'h344: csr.mip     <= w_data;
+  //     endcase
+  //   end
+  // endtask
+
+  function [32:0] rw_csr
+    ( input        r_enabled,
+      input [11:0] r_addr,
+
+      input        w_enabled,
+      input [4:0]  w_addr,
+      input [31:0] w_data);
+
+    rw_csr = r_enabled ?
+             ((w_enabled && w_addr == r_addr) ? {1'b1, w_data} : read_csr(r_addr)) :
+             33'b0;
+
+    if(w_enabled) begin
+      case (w_addr) // write w_data in csr
+        12'h300: csr.mstatus <= (csr.mstatus & ~csr.mstatus_mask) | (w_data & csr.mstatus_mask);
+        12'h304: csr.mie     <= (csr.mie & ~csr.mie_mask) | (w_data & csr.mie_mask);
+        12'h305: if ((w_data & 32'b11) < 32'd2) begin csr.mtvec <= w_data; end
+        12'h341: csr.mepc    <= w_data;
+        12'h342: csr.mcause  <= w_data;
+        12'h343: csr.mtval   <= w_data;
+        12'h344: csr.mip     <= w_data;
+      endcase
+    end
+  endfunction
+
+  // reg  [31:0] _mip_reg;
+  // wire [31:0] _mip_mask = {20'b0, 4'b1000, 4'b1000, 4'b0000};
+  // wire [31:0] _mip = (_mip_reg & _mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
+  // reg  [31:0] _mie_reg;
+  // wire [31:0] _mie_mask = {20'b0, 4'b1010, 4'b1010, 4'b1010};
+  // wire [31:0] _mie = _mie_reg & _mie_mask;
+  wire [31:0] _mip = (csr.mip & csr.mip_mask) | {20'b0, ext_intr, 3'b0, timer_intr, 3'b0, 4'b0};
+  wire [31:0] _mie = csr.mie & csr.mie_mask;
+
+  // reg  [31:0] _mtvec;
+  // reg  [31:0] _mcause;
+  // reg  [31:0] _mepc;
+  // reg  [31:0] _mtval;
+  // reg  [31:0] _mstatus;
+  // wire        _mstatus_tvm  = _mstatus[20];
+  // wire [1:0]  _mstatus_mpp  = _mstatus[12:11];
+  // wire        _mstatus_spp  = _mstatus[8];
+  // wire        _mstatus_mpie = _mstatus[7];
+  // wire        _mstatus_spie = _mstatus[5];
+  // wire        _mstatus_mie  = _mstatus[3];
+  // wire        _mstatus_sie  = _mstatus[1];
+  wire        _mstatus_tvm  = csr.mstatus[20];
+  wire [1:0]  _mstatus_mpp  = csr.mstatus[12:11];
+  wire        _mstatus_spp  = csr.mstatus[8];
+  wire        _mstatus_mpie = csr.mstatus[7];
+  wire        _mstatus_spie = csr.mstatus[5];
+  wire        _mstatus_mie  = csr.mstatus[3];
+  wire        _mstatus_sie  = csr.mstatus[1];
 
   wire [31:0] exception_vec_when_interrupted = (_mip[11] && _mie[11]) ? 32'd11 :
                                                (_mip[3]  && _mie[3] ) ? 32'd3  :
@@ -318,42 +401,56 @@ module core
 
   task set_mstatus_by_trap;
     begin
-      _mstatus <= {_mstatus[31:13],
-                   cpu_mode[1:0],   // mpp
-                   _mstatus[10:8],
-                   _mstatus[3],     // mpie
-                   _mstatus[6:4],
-                   1'b0,            // mie
-                   _mstatus[2:0]};
+      // _mstatus <= {_mstatus[31:13],
+      //              cpu_mode[1:0],   // mpp
+      //              _mstatus[10:8],
+      //              _mstatus[3],     // mpie
+      //              _mstatus[6:4],
+      //              1'b0,            // mie
+      //              _mstatus[2:0]};
+      csr.mstatus <= {csr.mstatus[31:13],
+                      cpu_mode[1:0],      // mpp
+                      csr.mstatus[10:8],
+                      csr.mstatus[3],     // mpie
+                      csr.mstatus[6:4],
+                      1'b0,               // mie
+                      csr.mstatus[2:0]};
     end
   endtask
 
   task set_mstatus_by_mret;
     begin
-      _mstatus <= {_mstatus[31:13],
-                   2'b0,            // mpp
-                   _mstatus[10:8],
-                   1'b1,            // mpie
-                   _mstatus[6:4],
-                   _mstatus_mpie,   // mie
-                   _mstatus[2:0]};
+      // _mstatus <= {_mstatus[31:13],
+      //              2'b0,            // mpp
+      //              _mstatus[10:8],
+      //              1'b1,            // mpie
+      //              _mstatus[6:4],
+      //              _mstatus_mpie,   // mie
+      //              _mstatus[2:0]};
+      csr.mstatus <= {csr.mstatus[31:13],
+                      2'b0,               // mpp
+                      csr.mstatus[10:8],
+                      1'b1,               // mpie
+                      csr.mstatus[6:4],
+                      _mstatus_mpie,   // mie
+                      csr.mstatus[2:0]};
     end
   endtask
 
   task set_csr_when_exception;
     begin
-      _mcause  <= {28'b0, exception_code};
-      _mepc    <= pc_when_exception + 1;
-      _mtval   <= exception_tval;
+      csr.mcause  <= {28'b0, exception_code};
+      csr.mepc    <= pc_when_exception + 1;
+      csr.mtval   <= exception_tval;
       set_mstatus_by_trap();
     end
   endtask
 
   task set_csr_when_interrupted;
     begin
-      _mcause <= {1'b1, exception_vec_when_interrupted[30:0]};
-      _mepc   <= pc_when_interrupted;
-      _mtval  <= 32'b0;
+      csr.mcause <= {1'b1, exception_vec_when_interrupted[30:0]};
+      csr.mepc   <= pc_when_interrupted;
+      csr.mtval  <= 32'b0;
       set_mstatus_by_trap();
     end
   endtask
@@ -418,15 +515,15 @@ module core
       global_pred_fd <= 2'b0;
       global_pred_de <= 2'b0;
 
-      _mip_reg <= 32'b0;
-      // _mie_reg <= 32'b0;
-      _mie_reg <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
-      // _mtvec   <= 32'b0;
-      _mtvec   <= {30'd47, 2'b0};
-      _mcause  <= 32'b0;
-      _mepc    <= 32'b0;
-      _mtval   <= 32'b0;
-      _mstatus <= 32'b0;
+      // _mip_reg <= 32'b0;
+      // // _mie_reg <= 32'b0;
+      // _mie_reg <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
+      // // _mtvec   <= 32'b0;
+      // _mtvec   <= {30'd47, 2'b0};
+      // _mcause  <= 32'b0;
+      // _mepc    <= 32'b0;
+      // _mtval   <= 32'b0;
+      // _mstatus <= 32'b0;
       // _medeleg <= 32'b0;
       // _mideleg <= 32'b0;
       // _mie <= 32'b0;
@@ -434,6 +531,8 @@ module core
       // _mscratch <= 32'b0;
       // _mip_shadow <= 32'b0;
       // _minstret_full <= 64'h0;
+
+      init_csr();
 
       is_exception        <= 0;
       exception_code      <= 4'b0;
@@ -463,13 +562,13 @@ module core
         // pc は全部 >> 2 していいかも
         if (is_exception) begin
           // pc <= {_mtvec[31:2], 2'b0};
-          pc <= {2'b0, _mtvec[31:2]};
+          pc <= {2'b0, csr.mtvec[31:2]};
           set_csr_when_exception();
         end else begin // interrupted
           // pc <= (_mtvec[1:0] == 2'b0) ? {_mtvec[31:2], 2'b0} :
           //       {_mtvec[31:2], 2'b0} + (exception_vec_when_interrupted[4:0] << 2);
-          pc <= (_mtvec[1:0] == 2'b0) ? {2'b0, _mtvec[31:2]} :
-                {2'b0, _mtvec[31:2]} + {27'b0, exception_vec_when_interrupted[4:0]};
+          pc <= (csr.mtvec[1:0] == 2'b0) ? {2'b0, csr.mtvec[31:2]} :
+                {2'b0, csr.mtvec[31:2]} + {27'b0, exception_vec_when_interrupted[4:0]};
           set_csr_when_interrupted();
         end
       end else begin // if (state)
@@ -483,7 +582,7 @@ module core
             cpu_mode <= 2'd0;
             set_mstatus_by_mret();
 
-            pc <= _mepc;
+            pc <= csr.mepc;
             // pc <= _mepc;
             flush_stages_when_mret();
           end else begin
