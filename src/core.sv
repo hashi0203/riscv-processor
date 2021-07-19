@@ -348,6 +348,26 @@ module core
     end
   endtask
 
+  task raise_ebreak;
+    begin
+      is_exception      <= 1;
+      exception_code    <= 4'd3;
+      exception_tval    <= instr_de.pc;
+      pc_when_exception <= instr_de.pc;
+    end
+  endtask
+
+  task raise_ecall;
+    begin
+      is_exception      <= 1'b1;
+      exception_code    <= cpu_mode == 2'd3 ? 4'd11 :
+                           cpu_mode == 2'd0 ? 4'd8  :
+                           5'd16;
+      exception_tval    <= 32'd0;
+      pc_when_exception <= instr_de.pc;
+    end
+   endtask
+
   integer i;
   task init;
     begin
@@ -454,6 +474,14 @@ module core
             raise_illegal_instr();
             flush_all_stages();
           end
+        end else if (execute_enabled && instr_de.ecall) begin
+          state <= 1;
+          raise_ecall();
+          flush_all_stages();
+        end else if (execute_enabled && instr_de.ebreak) begin
+          state <= 1;
+          raise_ebreak();
+          flush_all_stages();
         end else if (pred_fail) begin
           bht[pc_e[7:0]][global_pred_de] <= is_jump ? bh_t : bh_nt;
           global_pred <= {global_pred[0], is_jump};
