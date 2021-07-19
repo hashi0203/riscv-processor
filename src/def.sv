@@ -9,6 +9,7 @@ typedef struct {
   reg [4:0]  rs2;
   reg [31:0] imm;
   reg [31:0] pc;
+  reg [31:0] raw;
 
   // rv32i
   reg        lui;
@@ -75,10 +76,14 @@ typedef struct {
   reg        rem;
   reg        remu;
 
+  // privileged instructions
+  reg        mret;
+
   // control flags
   reg        is_store;
   reg        is_load;
   reg        is_conditional_jump;
+  reg        is_illegal_instr;
 } instructions;
 
 `endif

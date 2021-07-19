@@ -18,8 +18,8 @@ module write
   assign completed = _completed & !enabled;
 
   assign reg_w_enabled = enabled && (instr.rd != 5'b0);
-  assign reg_w_addr = instr.rd;
-  assign reg_w_data = data;
+  assign reg_w_addr = enabled ? instr.rd : 5'b0;
+  assign reg_w_data = enabled ? data : 32'b0;
 
   always @(posedge clk) begin
     if (rstn) begin

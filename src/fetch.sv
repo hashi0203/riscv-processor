@@ -12,7 +12,7 @@ module fetch
     output wire [31:0] instr_raw );
 
   // fib
-  reg [31:0] instr_mem [0:40] = '{
+  reg [31:0] instr_mem [0:46] = '{
     32'b00000111010000000000000011101111,  //  0. jal ra,74 <main>
     32'b11111110000000010000000100010011,  //  1. addi sp(=r2),sp,-32
     32'b00000000000100010010111000100011,  //  2. sw ra(=r1),28(sp)
@@ -47,9 +47,11 @@ module fetch
     32'b00000000100000010010010000100011,  // 31. sw s0,8(sp)
     32'b00000001000000010000010000010011,  // 32. addi s0,sp,16
     32'b00000000101000000000010100010011,  // 33. li a0,10
+    32'b0,
     32'b11110111110111111111000011101111,  // 34. jal ra,4 <fib>
     32'b00000000000000000000000001101111,  // 35. j 8c <main+0x18>
-    32'b0, 32'b0, 32'b0, 32'b0, 32'b0
+    32'b0, 32'b0, 32'b0, 32'b0, 32'b0,
+    32'b00110000001000000000000001110011, 32'b0, 32'b0, 32'b0, 32'b0
   };
 
   // memory
@@ -89,7 +91,7 @@ module fetch
 
   reg _completed;
   assign completed = _completed & !enabled;
-  assign instr_raw = instr_mem[pc];
+  assign instr_raw = enabled ? instr_mem[pc] : 32'b0;
 
   always @(posedge clk) begin
     if(rstn) begin

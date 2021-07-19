@@ -20,8 +20,8 @@ module alu
   wire [63:0] _mulsu = $signed({_rs1_pn, rs1} * $signed({  32'b0, rs2}));
   wire [63:0] _muluu = $signed({  32'b0, rs1} * $signed({  32'b0, rs2}));
 
-  assign rd =
-      instr.lui    ? instr.imm :
+  assign rd = enabled ?
+     (instr.lui    ? instr.imm :
       instr.auipc  ? $signed(instr.pc) + $signed(instr.imm) :
 
       instr.jal    ? instr.pc + 1 :
@@ -85,7 +85,7 @@ module alu
       instr.divu   ? rs1 / rs2 :
       instr.rem    ? $signed(rs1) % $signed(rs2):
       instr.remu   ? rs1 % rs2 :
-      32'b0;
+      32'b0) : 32'b0;
 
 endmodule
 

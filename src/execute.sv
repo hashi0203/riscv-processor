@@ -48,18 +48,21 @@ module execute
       .w_enabled(instr.is_store),
       .w_data(rs2) );
 
-  assign rd        = instr.is_load ? r_data : alu_rd;
-  assign is_jump   = instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1);
-  assign jump_dest = instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
-                     instr.jalr ? $signed(rs1) + $signed($signed(instr.imm) >>> 2) :
-                     instr.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
-                     instr.pc + 1;
+  assign rd        = enabled ? (instr.is_load ? r_data : alu_rd) : 32'b0;
+  assign is_jump   = enabled && (instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1));
+  assign jump_dest = enabled ?
+                     (instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
+                      instr.jalr ? $signed(rs1) + $signed($signed(instr.imm) >>> 2) :
+                      instr.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
+                      instr.pc + 1) : 32'b0;
 
   always @(posedge clk) begin
     if (rstn) begin
       if (enabled) begin
         instr_out <= instr;
       end
+    end else begin
+      instr_out <= '{ default:0 };
     end
   end
 endmodule

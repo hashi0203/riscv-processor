@@ -11,7 +11,7 @@ module test_core();
   wire completed;
   int i, r;
 
-  core _core(clk, rstn, pc, rd, preds, regs, completed);
+  core _core(clk, rstn, 1'b0, 1'b0, pc, rd, preds, regs, completed);
 
   initial begin
     // $dumpfile("test_core.vcd");
@@ -21,7 +21,7 @@ module test_core();
     $display("difference message format");
 
     clk = 0;
-    for (i=0; i<8450; i++) begin
+    for (i=0; i<9000; i++) begin
       #10
       clk = ~clk;
       if (completed) begin
