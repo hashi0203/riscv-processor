@@ -4,13 +4,11 @@
 
 typedef struct {
   // metadata
-  reg [4:0]  rd_addr;
-  reg [4:0]  rs1_addr;
-  reg [4:0]  rs2_addr;
+  reg [4:0]  rd;
+  reg [4:0]  rs1;
+  reg [4:0]  rs2;
   reg [31:0] imm;
-  reg [31:0] zimm;
   reg [31:0] pc;
-  reg [31:0] raw;
 
   // rv32i
   reg        lui;
@@ -77,29 +75,10 @@ typedef struct {
   reg        rem;
   reg        remu;
 
-  // privileged instructions
-  reg        mret;
-
   // control flags
   reg        is_store;
   reg        is_load;
-  reg        is_csr;
   reg        is_conditional_jump;
-  reg        is_illegal_instr;
 } instructions;
-
-typedef struct {
-  reg [31:0] mstatus_mask;
-  reg [31:0] mie_mask;
-  reg [31:0] mip_mask;
-
-  reg [31:0] mstatus;
-  reg [31:0] mie;
-  reg [31:0] mtvec;
-  reg [31:0] mepc;
-  reg [31:0] mcause;
-  reg [31:0] mtval;
-  reg [31:0] mip;
-} csreg;
 
 `endif

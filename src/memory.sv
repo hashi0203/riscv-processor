@@ -25,8 +25,8 @@ module memory
   end
 
   always @(posedge clk) begin
-    if (rstn) begin
-      if (w_enabled) begin
+    if(rstn) begin
+      if(w_enabled) begin
         mem[addr] <= w_data;
       end
     end
