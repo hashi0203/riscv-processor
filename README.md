@@ -14,14 +14,14 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 
 ## Structure
 
-- 4 stage pipeline (Fetch, Decode, Execute, Write)
-- Forwarding (E -> D, W -> D)
-- Branch prediction (Two-level adaptive predictor)
+- 4-stage pipeline (`Fetch`, `Decode`, `Execute`, `Write)`
+- Forwarding (`E -> D`, `W -> D`)
+- Branch prediction (`Two-level adaptive predictor`)
 - Register (32 entries, 32 bit)
 - Memory (1024 entries, 32 bit)
 	- Use just registers for ease of implementation
 - CSR (Control and Status Register)
-- Exception/Interrupt handling (only User and Machine mode)
+- Exception/Interrupt handling (only `User` and `Machine` mode without `Supervisor` mode)
 
 ## Installation
 
@@ -34,7 +34,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 2. RISC-V Cross Compiler
 
 	If you just want to run the processor, you can skip this process.<br>
-	If you want to run your original test program, you should follow this process.
+	If you want to run your `original test program`, you should follow this process.
 
 	We use [riscv-gnu-toolchain](https://github.com/riscv/riscv-gnu-toolchain) as a cross compiler.<br>
 	Basically, you can follow the instructions in the GitHub.
@@ -57,7 +57,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 ## Usage
 
 If you just want to run the processor, you can skip 1 and 2.<br>
-If you want to run your original test program, you should follow 1 to 3.
+If you want to run your `original test program`, you should follow 1 to 3.
 
 1. Make a test program for processor in [test-programs](./test-programs).
 	- Make a test program in C (e.g., [fib.c](./test-programs/fib.c), [memory.c](./test-programs/memory.c)).
@@ -68,7 +68,7 @@ If you want to run your original test program, you should follow 1 to 3.
 	$ make ARG=fib
 	```
 
-	- Output files are explained later in `Files in test-programs` chapter.
+	- Output files are explained later in [Files in test-programs](#files-in-test-programs) chapter.
 
 2. Change the test program for processor.
 	- Update instruction memory (`instr_mem`) in [fetch.sv](./src/fetch.sv).
