@@ -25,8 +25,8 @@ start.o: start.S
 $(ARG).o: $(ARG).S
 	$(CC) $(CFLAGS) -o $(ARG).o $(ARG).S
 
-# $(ARG).S: $(ARG).c
-# 	$(CC) $(CFLAGS) -S -o $(ARG).S $(ARG).c
+$(ARG).S: $(ARG).c
+	$(CC) $(CFLAGS) -S -o $(ARG).S $(ARG).c
 
 $(ARG).dump: $(ARG).elf
 	$(OBJDUMP) -d $(ARG).elf > $(ARG).dump
