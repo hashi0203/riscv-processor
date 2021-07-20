@@ -35,6 +35,92 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 		- 7: Machine timer interrupt
 		- 11: Machine external interrupt
 
+## Registers
+
+| Register | ABI Name | Description                        |
+| -------- | -------- | ---------------------------------- |
+| r0       | zero     | hardwired zero                     |
+| r1       | ra       | return address                     |
+| r2       | sp       | stack pointer                      |
+| r8       | s0 / fp  | saved register / frame pointer     |
+| r9       | s1       | saved register                     |
+| r10-11   | a0-1     | function arguments / return values |
+| r12-17   | a2-7     | function arguments                 |
+
+
+## Demo
+
+1. `fib-csr`
+
+	- fib function with exceptions, interrupts, and CSR operations
+	- `r15 = fib(10)`
+
+	```
+	clocks       : 18614
+	pc           :    43
+	instructions : total 14587, normal   3809, exception   709, others 10069
+	prediction   : total  1344, succeed  1130, fail        214
+	register     :
+			r00:    0,    r01:   43,    r02: 2032,    r03:    0,
+			r04:    0,    r05:    0,    r06:    0,    r07:    0,
+			r08: 2048,    r09:    0,    r10:   89,    r11:    0,
+			r12:    0,    r13:    0,    r14:    0,    r15:   89
+	```
+
+2. `fib-ebreak`
+
+	- fib function with exceptions and interrupts
+	- `r15 = fib(10)`
+
+	```
+	clocks       :  9387
+	pc           :    43
+	instructions : total  5267, normal   3809, exception   709, others   749
+	prediction   : total   622, succeed   416, fail        206
+	register     :
+			r00:    0,    r01:   43,    r02: 2032,    r03:    0,
+			r04:    0,    r05:    0,    r06:    0,    r07:    0,
+			r08: 2048,    r09:    0,    r10:   89,    r11:    0,
+			r12:    0,    r13:    0,    r14:    0,    r15:   89
+	```
+
+3. `fib`
+
+	- fib function
+	- `r15 = fib(10)`
+	- 4222 [clocks] = 3809 [instructions] + (206-1) * 2 [stalls] + (4-1) [stages]
+		- `206-1` is performed to ignore the prediction miss of the final instruction.
+
+	```
+	clocks       :  4222
+	pc           :    35
+	instructions : total  3809, normal   3809, exception     0, others     0
+	prediction   : total   622, succeed   416, fail        206
+	register     :
+			r00:    0,    r01:   35,    r02: 2032,    r03:    0,
+			r04:    0,    r05:    0,    r06:    0,    r07:    0,
+			r08: 2048,    r09:    0,    r10:   89,    r11:    0,
+			r12:    0,    r13:    0,    r14:    0,    r15:   89
+	```
+
+4. `memory`
+
+	- memory operations
+	- `r15 = a[0](=1) + a[1](=2)`
+
+	```
+	clocks       :    16
+	pc           :    12
+	instructions : total    13, normal     13, exception     0, others     0
+	prediction   : total     2, succeed     1, fail          1
+	register     :
+			r00:    0,    r01:    1,    r02: 2016,    r03:    0,
+			r04:    0,    r05:    0,    r06:    0,    r07:    0,
+			r08: 2048,    r09:    0,    r10:    0,    r11:    0,
+			r12:    0,    r13:    0,    r14:    1,    r15:    3
+	```
+
+
 ## Installation
 
 1. This repository
