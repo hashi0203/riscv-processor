@@ -7,7 +7,7 @@ OBJDUMP := riscv32-unknown-linux-gnu-objdump
 CFLAGS := -march=rv32ima -c
 LINK := -L/home/nhsmt1123/opt/riscv32/riscv32-unknown-gnu/lib
 
-main: $(ARG).hex $(ARG).S
+main: $(ARG).hex $(ARG).dump
 	./hex2bin.sh $(ARG).hex > $(ARG).b
 
 $(ARG).hex: $(ARG).bin
@@ -22,11 +22,14 @@ $(ARG).elf: $(ARG).o start.o
 start.o: start.S
 	$(CC) $(CFLAGS) -o start.o start.S
 
-$(ARG).o: $(ARG).c
-	$(CC) $(CFLAGS) -o $(ARG).o $(ARG).c
+$(ARG).o: $(ARG).S
+	$(CC) $(CFLAGS) -o $(ARG).o $(ARG).S
 
-$(ARG).S: $(ARG).elf
-	$(OBJDUMP) -d $(ARG).elf > $(ARG).S
+$(ARG).S: $(ARG).c
+	$(CC) $(CFLAGS) -S -o $(ARG).S $(ARG).c
+
+$(ARG).dump: $(ARG).elf
+	$(OBJDUMP) -d $(ARG).elf > $(ARG).dump
 
 clean:
-	$(RM) *.o *.out *.bin *.elf $(ARG).S
+	$(RM) *.o *.out *.bin *.elf
