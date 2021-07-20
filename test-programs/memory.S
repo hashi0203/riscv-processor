@@ -16,11 +16,8 @@ main:
 	lw	a5,-24(s0)
 	add	a5,a4,a5
 	sw	a5,-20(s0)
-	li	a5,0
-	mv	a0,a5
-	lw	s0,28(sp)
-	addi	sp,sp,32
-	jr	ra
+.L2:
+	j	.L2
 	.size	main, .-main
 	.ident	"GCC: (GNU) 10.2.0"
 	.section	.note.GNU-stack,"",@progbits

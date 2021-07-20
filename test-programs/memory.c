@@ -3,5 +3,6 @@ int main() {
     a[0] = 1;
     a[1] = 2;
     int n = a[0] + a[1];
+    for(;;) {}
     return 0;
 }

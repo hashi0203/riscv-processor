@@ -21,8 +21,4 @@ Disassembly of section .text:
   24:	fe842783          	lw	a5,-24(s0)
   28:	00f707b3          	add	a5,a4,a5
   2c:	fef42623          	sw	a5,-20(s0)
-  30:	00000793          	li	a5,0
-  34:	00078513          	mv	a0,a5
-  38:	01c12403          	lw	s0,28(sp)
-  3c:	02010113          	addi	sp,sp,32
-  40:	00008067          	ret
+  30:	0000006f          	j	30 <main+0x2c>
