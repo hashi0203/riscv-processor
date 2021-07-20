@@ -48,7 +48,7 @@ module test_core();
       end
 
       if (completed) begin
-        $display("iteration    : %5d", i);
+        $display("clocks       : %5d", (i >> 1)+1);
         $display("pc           : %5d", pc);
         $display("instructions : total %5d, normal  %5d, exception %5d, others %5d", instrs[0], instrs[1], instrs[2], instrs[3]);
         $display("prediction   : total %5d, succeed %5d, fail      %5d",  preds[0],  preds[1],  preds[2]);
