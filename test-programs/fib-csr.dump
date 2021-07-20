@@ -55,12 +55,17 @@ Disassembly of section .text:
   a4:	00a00513          	li	a0,10
   a8:	f5dff0ef          	jal	ra,4 <fib>
   ac:	0000006f          	j	ac <main+0x20>
-  b0:	34202673          	csrr	a2,mcause
-  b4:	01f00693          	li	a3,31
-  b8:	00d65633          	srl	a2,a2,a3
-  bc:	00060463          	beqz	a2,c4 <main+0x38>
-  c0:	30200073          	mret
-  c4:	34102673          	csrr	a2,mepc
-  c8:	00160613          	addi	a2,a2,1
-  cc:	34161073          	csrw	mepc,a2
-  d0:	30200073          	mret
+  b0:	fe010113          	addi	sp,sp,-32
+  b4:	00e12e23          	sw	a4,28(sp)
+  b8:	00f12c23          	sw	a5,24(sp)
+  bc:	34202773          	csrr	a4,mcause
+  c0:	01f00793          	li	a5,31
+  c4:	00f75733          	srl	a4,a4,a5
+  c8:	00071863          	bnez	a4,d8 <main+0x4c>
+  cc:	34102773          	csrr	a4,mepc
+  d0:	00170713          	addi	a4,a4,1
+  d4:	34171073          	csrw	mepc,a4
+  d8:	01c12703          	lw	a4,28(sp)
+  dc:	01812783          	lw	a5,24(sp)
+  e0:	02010113          	addi	sp,sp,32
+  e4:	30200073          	mret

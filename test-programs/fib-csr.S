@@ -57,15 +57,20 @@ main:
 .L5:
 	j	.L5
 .L6:
-	csrr a2,834
-	li a3,31
-	srl a2,a2,a3
-	beq a2,zero,.L7
-	mret
+	addi	sp,sp,-32
+	sw	a4,28(sp)
+	sw	a5,24(sp)
+	csrr a4,834
+	li a5,31
+	srl a4,a4,a5
+	bne a4,zero,.L7
+	csrr a4,833
+	addi a4,a4,1
+	csrw 833,a4
 .L7:
-	csrr a2,833
-	addi a2,a2,1
-	csrw 833,a2
+	lw	a4,28(sp)
+	lw	a5,24(sp)
+	addi	sp,sp,32
 	mret
 	.size	main, .-main
 	.ident	"GCC: (GNU) 10.2.0"
