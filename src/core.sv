@@ -71,8 +71,6 @@ module core
   reg [31:0] csr_de_in;
 
   instructions instr_ew;
-  // reg  [31:0] rs1_ew_out;
-  // reg  [31:0] rs2_ew_out;
   wire [31:0] rd_ew_out;
   wire [31:0] csrd_ew_out;
   wire        is_jump;
@@ -90,8 +88,6 @@ module core
 
       .completed(execute_completed),
       .instr_out(instr_ew),
-      // .rs1_out(rs1_ew_out),
-      // .rs2_out(rs2_ew_out),
 
       .rd(rd_ew_out),
       .csrd(csrd_ew_out),
@@ -216,12 +212,12 @@ module core
     end
   endfunction
 
-  function [32:0] rw_csr
+  function [32:0]  rw_csr
     ( input        r_enabled,
       input [11:0] r_addr,
 
       input        w_enabled,
-      input [4:0]  w_addr,
+      input [11:0] w_addr,
       input [31:0] w_data );
 
     rw_csr = r_enabled ?
@@ -543,7 +539,6 @@ module core
             set_mstatus_by_mret();
 
             pc <= (csr_w_enabled && csr_w_addr == 12'h341) ? csr_w_data : csr.mepc;
-            // pc <= _mepc;
             flush_stages_when_mret();
           end else begin
             state <= 1;

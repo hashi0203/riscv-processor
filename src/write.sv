@@ -21,13 +21,15 @@ module write
   reg _completed;
   assign completed = _completed & !enabled;
 
-  assign reg_w_enabled = enabled && (instr.rd != 5'b0);
-  assign reg_w_addr    = enabled ? instr.rd : 5'b0;
-  assign reg_w_data    = enabled ? reg_data : 32'b0;
+  wire  _reg_w_enabled = enabled && (instr.rd != 5'b0);
+  assign reg_w_enabled = _reg_w_enabled;
+  assign reg_w_addr    = _reg_w_enabled ? instr.rd : 5'b0;
+  assign reg_w_data    = _reg_w_enabled ? reg_data : 32'b0;
 
-  assign csr_w_enabled = enabled && (instr.is_csr);
-  assign csr_w_addr    = enabled ? instr.imm : 12'b0;
-  assign csr_w_data    = enabled ? csr_data : 32'b0;
+  wire  _csr_w_enabled = enabled && (instr.is_csr);
+  assign csr_w_enabled = _csr_w_enabled;
+  assign csr_w_addr    = _csr_w_enabled ? instr.imm : 12'b0;
+  assign csr_w_data    = _csr_w_enabled ? csr_data : 32'b0;
 
   always @(posedge clk) begin
     if (rstn) begin

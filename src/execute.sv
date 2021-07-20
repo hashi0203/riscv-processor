@@ -13,8 +13,6 @@ module execute
 
     output wire         completed,
     output instructions instr_out,
-    // output reg [31:0]   rs1_out,
-    // output reg [31:0]   rs2_out,
 
     output wire [31:0]  rd,
     output wire [31:0]  csrd,
@@ -34,8 +32,6 @@ module execute
       .completed(alu_completed),
       .rd(alu_rd) );
 
-  // wire _completed = ((instr_n.rv32f && fpu_completed)
-  //                     || (!instr_n.rv32f && alu_completed));
   wire _completed = 1;
   assign completed = _completed & !enabled;
 
