@@ -27,7 +27,7 @@ module alu
       instr.jalr   ? instr.pc + 1 :
 
       instr.beq    ? rs1_data == rs2_data :
-      instr.bne    ? rs1_data != rs1_data :
+      instr.bne    ? rs1_data != rs2_data :
       instr.blt    ? $signed(rs1_data) < $signed(rs2_data) :
       instr.bge    ? $signed(rs1_data) >= $signed(rs2_data) :
       instr.bltu   ? rs1_data < rs2_data:
