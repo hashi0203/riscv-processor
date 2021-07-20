@@ -17,6 +17,9 @@ module core
   reg        state;    // 0: default, 1: trap (exception, interrupt)
   reg [1:0]  cpu_mode; // 0: user, 3: machine
 
+  wire [31:0] final_pc            = 32'd43;
+  wire [29:0] privilege_jump_addr = 30'd47;
+
   // fetch
   reg  fetch_enabled;
   reg  fetch_rstn;
@@ -66,10 +69,10 @@ module core
   reg [31:0] csr_data_de_in;
 
   instructions instr_ew;
-  wire [31:0] rd_data_ew_out;
-  wire [31:0] csrd_data_ew_out;
-  wire        is_jump;
-  wire [31:0] jump_dest;
+  wire [31:0]  rd_data_ew_out;
+  wire [31:0]  csrd_data_ew_out;
+  wire         is_jump;
+  wire [31:0]  jump_dest;
 
   execute _execute
     ( .clk(clk),
@@ -179,7 +182,7 @@ module core
       // csr.mie      <= 32'b0;
       csr.mie      <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
       // csr.mtvec    <= 32'b0;
-      csr.mtvec    <= {30'd47, 2'b0};
+      csr.mtvec    <= {privilege_jump_addr, 2'b0};
       csr.mepc     <= 32'b0;
       csr.mcause   <= 32'b0;
       csr.mtval    <= 32'b0;
@@ -498,7 +501,7 @@ module core
 
   always @(posedge clk) begin
     pc_out <= pc;
-    completed <= instr_ew.pc == 32'd43;
+    completed <= instr_ew.pc == final_pc;
 
     if (rstn) begin
       if (state) begin

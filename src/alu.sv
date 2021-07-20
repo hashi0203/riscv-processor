@@ -65,9 +65,9 @@ module alu
       instr.i_and  ? rs1_data & rs2_data :
 
       // instr.fence  ? :
-      // instr.fencei ? :
       // instr.ecall  ? :
       // instr.ebreak ? :
+
       instr.csrrw  ? rs1_data :
       instr.csrrs  ? csr_data | rs1_data :
       instr.csrrc  ? csr_data & ~rs1_data :

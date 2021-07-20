@@ -57,9 +57,10 @@ typedef struct {
   reg        i_and;
 
   reg        fence;
-  reg        fencei;
   reg        ecall;
   reg        ebreak;
+
+  // rv32 zicsr
   reg        csrrw;
   reg        csrrs;
   reg        csrrc;

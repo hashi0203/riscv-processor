@@ -11,6 +11,7 @@ module test_core();
   wire [31:0] regs [31:0];
   wire completed;
   int i, r;
+  int max_itr = 100000;
 
   core _core(clk, rstn, ext_intr, timer_intr, pc, preds, regs, completed);
 
@@ -24,15 +25,24 @@ module test_core();
     clk = 0;
     ext_intr = 0;
     timer_intr = 0;
-    for (i=0; i<100000; i++) begin
+    for (i=0; i<max_itr; i++) begin
       #10
       clk = ~clk;
+
       if (i==1000) begin
         ext_intr = 1;
       end
       if (i==1200) begin
         ext_intr = 0;
       end
+
+      if (i==10000) begin
+        timer_intr = 1;
+      end
+      if (i==10200) begin
+        timer_intr = 0;
+      end
+
       if (completed) begin
         $display("iteration: %5d", i);
         $display("pc: %5d", pc);

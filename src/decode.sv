@@ -86,9 +86,10 @@ module decode
   wire _i_and  = (opcode == 7'b0110011) && (funct3 == 3'b111) && (funct7 == 7'b0000000);
 
   wire _fence  = (opcode == 7'b0001111) && (_rd == 5'b00000) && (funct3 == 7'b0000000) && (_rs1 == 5'b00000) && (instr_raw[31:28] == 4'b0000);
-  wire _fencei = (opcode == 7'b0001111) && (instr_raw[31:7] == 25'b0000000000000000000100000);
   wire _ecall  = (opcode == 7'b1110011) && (instr_raw[31:7] == 25'b0000000000000000000000000);
   wire _ebreak = (opcode == 7'b1110011) && (instr_raw[31:7] == 25'b0000000000010000000000000);
+
+  // rv32 zicsr
   wire _csrrw  = (opcode == 7'b1110011) && (funct3 == 3'b001);
   wire _csrrs  = (opcode == 7'b1110011) && (funct3 == 3'b010);
   wire _csrrc  = (opcode == 7'b1110011) && (funct3 == 3'b011);
@@ -123,7 +124,7 @@ module decode
                               ||_sb || _sh || _sw
                               || _addi || _slti || _sltiu || _xori || _ori || _andi || _slli || _srli || _srai
                               || _add || _sub || _sll || _slt || _sltu || _i_xor || _srl || _sra || _i_or || _i_and
-                              || _fence || _fencei || _ecall || _ebreak
+                              || _fence || _ecall || _ebreak
                               || _csrrw || _csrrs || _csrrc || _csrrwi || _csrrsi || _csrrci
                               || _mul || _mulh || _mulhsu || _mulhu || _div || _divu || _rem || _remu
                               || _mret);
@@ -190,9 +191,9 @@ module decode
         instr.i_and  <= _i_and;
 
         instr.fence  <= _fence;
-        instr.fencei <= _fencei;
         instr.ecall  <= _ecall;
         instr.ebreak <= _ebreak;
+
         instr.csrrw  <= _csrrw;
         instr.csrrs  <= _csrrs;
         instr.csrrc  <= _csrrc;
