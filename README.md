@@ -26,7 +26,14 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 	- Use just registers for ease of implementation
 - CSR (Control and Status Register)
 - Exception/Interrupt handling (only `User` and `Machine` mode without `Supervisor` mode)
-
+	- Exception
+		- 2: Illegal instruction exception
+		- 3: Breakpoint exception
+		- 8: System call exception (from User mode)
+		- 11: System call exception (from Machine mode)
+	- Interrupt
+		- 7: Machine timer interrupt
+		- 11: Machine external interrupt
 
 ## Installation
 
