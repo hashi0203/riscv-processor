@@ -30,7 +30,7 @@ module core
       .enabled(fetch_enabled),
       .pc(pc),
 
-      .pc_n(pc_fd_out),
+      .pc_out(pc_fd_out),
       .instr_raw(instr_fd_out) );
 
   // decode
@@ -53,21 +53,21 @@ module core
       .instr_raw(instr_fd_in),
 
       .instr(instr_de),
-      .rs1(rs1_addr),
-      .rs2(rs2_addr),
-      .csr(csr_addr) );
+      .rs1_addr(rs1_addr),
+      .rs2_addr(rs2_addr),
+      .csr_addr(csr_addr) );
 
   // execute
   reg  execute_enabled;
   reg  execute_rstn;
 
-  reg [31:0] rs1_de_in;
-  reg [31:0] rs2_de_in;
-  reg [31:0] csr_de_in;
+  reg [31:0] rs1_data_de_in;
+  reg [31:0] rs2_data_de_in;
+  reg [31:0] csr_data_de_in;
 
   instructions instr_ew;
-  wire [31:0] rd_ew_out;
-  wire [31:0] csrd_ew_out;
+  wire [31:0] rd_data_ew_out;
+  wire [31:0] csrd_data_ew_out;
   wire        is_jump;
   wire [31:0] jump_dest;
 
@@ -77,13 +77,13 @@ module core
 
       .enabled(execute_enabled),
       .instr(instr_de),
-      .rs1(rs1_de_in),
-      .rs2(rs2_de_in),
-      .csr(csr_de_in),
+      .rs1_data(rs1_data_de_in),
+      .rs2_data(rs2_data_de_in),
+      .csr_data(csr_data_de_in),
 
       .instr_out(instr_ew),
-      .rd(rd_ew_out),
-      .csrd(csrd_ew_out),
+      .rd_data(rd_data_ew_out),
+      .csrd_data(csrd_data_ew_out),
       .is_jump(is_jump),
       .jump_dest(jump_dest) );
 
@@ -91,8 +91,8 @@ module core
   reg  write_enabled;
   reg  write_rstn;
 
-  reg [31:0]  rd_ew_in;
-  reg [31:0]  csrd_ew_in;
+  reg [31:0]  rd_data_ew_in;
+  reg [31:0]  csrd_data_ew_in;
 
   wire        reg_w_enabled;
   wire [4:0]  reg_w_addr;
@@ -107,8 +107,8 @@ module core
       .rstn(rstn & write_rstn),
       .enabled(write_enabled),
       .instr(instr_ew),
-      .reg_data(rd_ew_in),
-      .csr_data(csrd_ew_in),
+      .reg_data(rd_data_ew_in),
+      .csr_data(csrd_data_ew_in),
 
       .reg_w_enabled(reg_w_enabled),
       .reg_w_addr(reg_w_addr),
@@ -132,8 +132,8 @@ module core
       .rs2_data(rs2_data),
 
       .w_enabled(reg_w_enabled),
-      .w_addr(reg_w_addr),
-      .w_data(reg_w_data),
+      .rd_addr(reg_w_addr),
+      .rd_data(reg_w_data),
 
       .regs_out(regs) );
 
@@ -334,7 +334,7 @@ module core
   // pipeline register
   task set_fd_reg;
     begin
-      pc_fd_in       <= pc;
+      pc_fd_in       <= pc_fd_out;
       instr_fd_in    <= instr_fd_out;
       global_pred_fd <= global_pred;
     end
@@ -342,12 +342,12 @@ module core
 
   task set_de_reg;
     begin
-      rs1_de_in      <= ((execute_rstn && execute_enabled) && rs1_addr == instr_de.rd) ?
-                        rd_ew_out : rs1_data;
-      rs2_de_in      <= ((execute_rstn && execute_enabled) && rs2_addr == instr_de.rd) ?
-                        rd_ew_out : rs2_data;
-      csr_de_in      <= ((execute_rstn && execute_enabled) && csr_addr == instr_de.imm) ?
-                        csrd_ew_out : v_csr_data[31:0];
+      rs1_data_de_in <= ((execute_rstn && execute_enabled) && rs1_addr == instr_de.rd_addr) ?
+                        rd_data_ew_out : rs1_data;
+      rs2_data_de_in <= ((execute_rstn && execute_enabled) && rs2_addr == instr_de.rd_addr) ?
+                        rd_data_ew_out : rs2_data;
+      csr_data_de_in <= ((execute_rstn && execute_enabled) && csr_addr == instr_de.imm) ?
+                        csrd_data_ew_out : v_csr_data[31:0];
       is_csr_valid   <= v_csr_data[32:32];
       global_pred_de <= global_pred_fd;
     end
@@ -355,8 +355,8 @@ module core
 
   task set_ew_reg;
     begin
-      rd_ew_in   <= rd_ew_out;
-      csrd_ew_in <= csrd_ew_out;
+      rd_data_ew_in   <= rd_data_ew_out;
+      csrd_data_ew_in <= csrd_data_ew_out;
     end
   endtask
 
@@ -371,15 +371,15 @@ module core
 
   task flush_de_reg;
     begin
-      rs1_de_in      <= 32'b0;
-      rs2_de_in      <= 32'b0;
+      rs1_data_de_in      <= 32'b0;
+      rs2_data_de_in      <= 32'b0;
       global_pred_de <= 2'b0;
     end
   endtask
 
   task flush_ew_reg;
     begin
-      rd_ew_in <= 32'b0;
+      rd_data_ew_in <= 32'b0;
     end
   endtask
 

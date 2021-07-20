@@ -17,9 +17,9 @@ module write
     output wire [11:0]  csr_w_addr,
     output wire [31:0]  csr_w_data );
 
-  wire  _reg_w_enabled = rstn && enabled && (instr.rd != 5'b0);
+  wire  _reg_w_enabled = rstn && enabled && (instr.rd_addr != 5'b0);
   assign reg_w_enabled = _reg_w_enabled;
-  assign reg_w_addr    = _reg_w_enabled ? instr.rd : 5'b0;
+  assign reg_w_addr    = _reg_w_enabled ? instr.rd_addr : 5'b0;
   assign reg_w_data    = _reg_w_enabled ? reg_data : 32'b0;
 
   wire  _csr_w_enabled = rstn && enabled && (instr.is_csr);

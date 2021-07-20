@@ -4,9 +4,9 @@
 
 typedef struct {
   // metadata
-  reg [4:0]  rd;
-  reg [4:0]  rs1;
-  reg [4:0]  rs2;
+  reg [4:0]  rd_addr;
+  reg [4:0]  rs1_addr;
+  reg [4:0]  rs2_addr;
   reg [31:0] imm;
   reg [31:0] zimm;
   reg [31:0] pc;

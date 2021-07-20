@@ -9,14 +9,14 @@ module decode
     input  wire [31:0]  instr_raw,
 
     output instructions instr,
-    output wire [4:0]   rs1,
-    output wire [4:0]   rs2,
-    output wire [11:0]  csr );
+    output wire [4:0]   rs1_addr,
+    output wire [4:0]   rs2_addr,
+    output wire [11:0]  csr_addr );
 
 
   wire [6:0] funct7   = instr_raw[31:25];
-  wire [4:0] __rs2    = instr_raw[24:20];
-  wire [4:0] __rs1    = instr_raw[19:15];
+  wire [4:0] _rs2    = instr_raw[24:20];
+  wire [4:0] _rs1    = instr_raw[19:15];
   wire [2:0] funct3   = instr_raw[14:12];
   wire [4:0] _rd      = instr_raw[11:7];
   wire [6:0] opcode   = instr_raw[6:0];
@@ -33,13 +33,13 @@ module decode
   wire      need_zimm = _is_csr && (funct3 == 3'b101 || funct3 == 3'b110 || funct3 == 3'b111);
 
   // j and u do not require rs1
-  wire [4:0] _rs1 = (rstn && enabled) && (r_type || i_type || s_type || b_type) && !need_zimm ? __rs1 : 5'b00000;
+  wire [4:0] _rs1_addr = (rstn && enabled) && (r_type || i_type || s_type || b_type) && !need_zimm ? _rs1 : 5'b00000;
   // j, u, and i do not require rs2
-  wire [4:0] _rs2 = (rstn && enabled) && (r_type || s_type || b_type) ? __rs2 : 5'b00000;
+  wire [4:0] _rs2_addr = (rstn && enabled) && (r_type || s_type || b_type) ? _rs2 : 5'b00000;
 
-  assign rs1 = _rs1;
-  assign rs2 = _rs2;
-  assign csr = (rstn && enabled) && _is_csr ? instr_raw[31:20] : 12'b0;
+  assign rs1_addr = _rs1_addr;
+  assign rs2_addr = _rs2_addr;
+  assign csr_addr = (rstn && enabled) && _is_csr ? instr_raw[31:20] : 12'b0;
 
   wire _lui    = (opcode == 7'b0110111);
   wire _auipc  = (opcode == 7'b0010111);
@@ -85,7 +85,7 @@ module decode
   wire _i_or   = (opcode == 7'b0110011) && (funct3 == 3'b110) && (funct7 == 7'b0000000);
   wire _i_and  = (opcode == 7'b0110011) && (funct3 == 3'b111) && (funct7 == 7'b0000000);
 
-  wire _fence  = (opcode == 7'b0001111) && (_rd == 5'b00000) && (funct3 == 7'b0000000) && (__rs1 == 5'b00000) && (instr_raw[31:28] == 4'b0000);
+  wire _fence  = (opcode == 7'b0001111) && (_rd == 5'b00000) && (funct3 == 7'b0000000) && (_rs1 == 5'b00000) && (instr_raw[31:28] == 4'b0000);
   wire _fencei = (opcode == 7'b0001111) && (instr_raw[31:7] == 25'b0000000000000000000100000);
   wire _ecall  = (opcode == 7'b1110011) && (instr_raw[31:7] == 25'b0000000000000000000000000);
   wire _ebreak = (opcode == 7'b1110011) && (instr_raw[31:7] == 25'b0000000000010000000000000);
@@ -133,18 +133,18 @@ module decode
   always @(posedge clk) begin
     if (rstn) begin
       if (enabled) begin
-        instr.rd   <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
-        instr.rs1  <= _rs1;
-        instr.rs2  <= _rs2;
-        instr.imm  <= i_type ? {_imm_pn, instr_raw[31:20]} :
-                      s_type ? {_imm_pn, instr_raw[31:25], instr_raw[11:7]} :
-                      b_type ? {_imm_pn[18:0], instr_raw[31], instr_raw[7], instr_raw[30:25], instr_raw[11:8], 1'b0} :
-                      u_type ? {instr_raw[31:12], 12'b0} :
-                      j_type ? {_imm_pn[10:0], instr_raw[31], instr_raw[19:12], instr_raw[20], instr_raw[30:21], 1'b0} :
-                      32'b0;
-        instr.pc   <= pc;
-        instr.zimm <= need_zimm ? {27'b0, __rs1} : 32'b0;
-        instr.raw  <= instr_raw;
+        instr.rd_addr  <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
+        instr.rs1_addr <= _rs1_addr;
+        instr.rs2_addr <= _rs2_addr;
+        instr.imm      <= i_type ? {_imm_pn, instr_raw[31:20]} :
+                          s_type ? {_imm_pn, instr_raw[31:25], instr_raw[11:7]} :
+                          b_type ? {_imm_pn[18:0], instr_raw[31], instr_raw[7], instr_raw[30:25], instr_raw[11:8], 1'b0} :
+                          u_type ? {instr_raw[31:12], 12'b0} :
+                          j_type ? {_imm_pn[10:0], instr_raw[31], instr_raw[19:12], instr_raw[20], instr_raw[30:21], 1'b0} :
+                          32'b0;
+        instr.pc       <= pc;
+        instr.zimm     <= need_zimm ? {27'b0, _rs1} : 32'b0;
+        instr.raw      <= instr_raw;
 
         instr.lui    <= _lui;
         instr.auipc  <= _auipc;

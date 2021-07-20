@@ -7,7 +7,7 @@ module fetch
     input  wire        enabled,
     input  wire [31:0] pc,
 
-    output reg  [31:0] pc_n,
+    output wire [31:0] pc_out,
     output wire [31:0] instr_raw );
 
   // fib-csr
@@ -213,16 +213,7 @@ module fetch
   // };
 
   assign instr_raw = (rstn && enabled) ? instr_mem[pc] : 32'b0;
-
-  always @(posedge clk) begin
-    if (rstn) begin
-      if (enabled) begin
-        pc_n <= pc;
-      end
-    end else begin
-      pc_n <= 0;
-    end
-  end
+  assign pc_out    = (rstn && enabled) ? pc : 32'b0;
 endmodule
 
 `default_nettype wire
