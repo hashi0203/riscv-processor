@@ -8,7 +8,6 @@ module decode
     input  wire         enabled,
     input  wire [31:0]  instr_raw,
 
-    output wire         completed,
     output instructions instr,
     output wire [4:0]   rs1,
     output wire [4:0]   rs2,
@@ -129,16 +128,11 @@ module decode
                               || _mul || _mulh || _mulhsu || _mulhu || _div || _divu || _rem || _remu
                               || _mret);
 
-  reg  _completed;
-  assign completed = _completed & !enabled;
-
   wire [19:0] _imm_pn = instr_raw[31] ? ~20'b0 : 20'b0;
 
   always @(posedge clk) begin
     if (rstn) begin
       if (enabled) begin
-        _completed <= 1;
-
         instr.rd   <= (r_type || i_type || u_type || j_type) ? _rd : 5'b00000;
         instr.rs1  <= _rs1;
         instr.rs2  <= _rs2;
@@ -226,7 +220,6 @@ module decode
         instr.is_illegal_instr    <= _is_illegal_instr;
       end
     end else begin
-      _completed <= 0;
       instr <= '{ default:0 };
     end
   end

@@ -20,7 +20,6 @@ module core
   // fetch
   reg  fetch_enabled;
   reg  fetch_rstn;
-  wire fetch_completed;
 
   wire [31:0] pc_fd_out;
   wire [31:0] instr_fd_out;
@@ -31,14 +30,12 @@ module core
       .enabled(fetch_enabled),
       .pc(pc),
 
-      .completed(fetch_completed),
       .pc_n(pc_fd_out),
       .instr_raw(instr_fd_out) );
 
   // decode
   reg  decode_enabled;
   reg  decode_rstn;
-  wire decode_completed;
 
   reg [31:0] pc_fd_in;
   reg [31:0] instr_fd_in;
@@ -55,7 +52,6 @@ module core
       .enabled(decode_enabled),
       .instr_raw(instr_fd_in),
 
-      .completed(decode_completed),
       .instr(instr_de),
       .rs1(rs1_addr),
       .rs2(rs2_addr),
@@ -64,7 +60,6 @@ module core
   // execute
   reg  execute_enabled;
   reg  execute_rstn;
-  wire execute_completed;
 
   reg [31:0] rs1_de_in;
   reg [31:0] rs2_de_in;
@@ -86,19 +81,15 @@ module core
       .rs2(rs2_de_in),
       .csr(csr_de_in),
 
-      .completed(execute_completed),
       .instr_out(instr_ew),
-
       .rd(rd_ew_out),
       .csrd(csrd_ew_out),
       .is_jump(is_jump),
       .jump_dest(jump_dest) );
 
-
   // write
   reg  write_enabled;
   reg  write_rstn;
-  wire write_completed;
 
   reg [31:0]  rd_ew_in;
   reg [31:0]  csrd_ew_in;
@@ -124,8 +115,7 @@ module core
       .reg_w_data(reg_w_data),
       .csr_w_enabled(csr_w_enabled),
       .csr_w_addr(csr_w_addr),
-      .csr_w_data(csr_w_data),
-      .completed(write_completed) );
+      .csr_w_data(csr_w_data) );
 
   wire [31:0] rs1_data;
   wire [31:0] rs2_data;

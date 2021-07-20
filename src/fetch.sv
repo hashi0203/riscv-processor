@@ -7,7 +7,6 @@ module fetch
     input  wire        enabled,
     input  wire [31:0] pc,
 
-    output wire        completed,
     output reg  [31:0] pc_n,
     output wire [31:0] instr_raw );
 
@@ -213,18 +212,14 @@ module fetch
   //   32'b11111111100111111111000011101111   // JAL -2(imm) 1(rd)
   // };
 
-  reg _completed;
-  assign completed = _completed & !enabled;
   assign instr_raw = enabled ? instr_mem[pc] : 32'b0;
 
   always @(posedge clk) begin
-    if(rstn) begin
+    if (rstn) begin
       if (enabled) begin
-        _completed <= 1;
         pc_n <= pc;
       end
     end else begin
-      _completed <= 0;
       pc_n <= 0;
     end
   end

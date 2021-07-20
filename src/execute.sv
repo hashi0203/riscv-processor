@@ -11,16 +11,13 @@ module execute
     input  reg [31:0]   rs2,
     input  reg [31:0]   csr,
 
-    output wire         completed,
     output instructions instr_out,
-
     output wire [31:0]  rd,
     output wire [31:0]  csrd,
     output wire         is_jump,
     output wire [31:0]  jump_dest );
 
   wire [31:0] alu_rd;
-  wire        alu_completed;
   alu _alu
     ( .clk(clk),
       .rstn(rstn),
@@ -29,11 +26,7 @@ module execute
       .rs1(rs1),
       .rs2(rs2),
       .csr(csr),
-      .completed(alu_completed),
       .rd(alu_rd) );
-
-  wire _completed = 1;
-  assign completed = _completed & !enabled;
 
   wire [31:0] r_data;
   memory _memory

@@ -11,8 +11,6 @@ module alu
     input  reg  [31:0]  rs2,
     input  reg  [31:0]  csr,
 
-    output reg          completed,
-
     output wire [31:0]  rd );
 
   wire [31:0] _rs1_pn = rs1[31] ? ~32'b0 : 32'b0;
