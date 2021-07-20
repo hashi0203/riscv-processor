@@ -19,7 +19,7 @@ module alu
   wire [63:0] _mulsu = $signed({_rs1_pn, rs1} * $signed({  32'b0, rs2}));
   wire [63:0] _muluu = $signed({  32'b0, rs1} * $signed({  32'b0, rs2}));
 
-  assign rd = enabled ?
+  assign rd = (rstn && enabled) ?
      (instr.lui    ? instr.imm :
       instr.auipc  ? $signed(instr.pc) + $signed(instr.imm) :
 
@@ -33,7 +33,6 @@ module alu
       instr.bltu   ? rs1 < rs2:
       instr.bgeu   ? rs1 >= rs2:
 
-      // もしかしたら rs1 は >>> 2 しない方がいいかも
       // instr.lb     ? :
       // instr.lh     ? :
       // instr.lw     ? $signed(($signed(rs1) + $signed(instr.imm))) >>> 2:

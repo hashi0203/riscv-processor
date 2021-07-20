@@ -33,13 +33,13 @@ module decode
   wire      need_zimm = _is_csr && (funct3 == 3'b101 || funct3 == 3'b110 || funct3 == 3'b111);
 
   // j and u do not require rs1
-  wire [4:0] _rs1 = enabled && (r_type || i_type || s_type || b_type) && !need_zimm ? __rs1 : 5'b00000;
+  wire [4:0] _rs1 = (rstn && enabled) && (r_type || i_type || s_type || b_type) && !need_zimm ? __rs1 : 5'b00000;
   // j, u, and i do not require rs2
-  wire [4:0] _rs2 = enabled && (r_type || s_type || b_type) ? __rs2 : 5'b00000;
+  wire [4:0] _rs2 = (rstn && enabled) && (r_type || s_type || b_type) ? __rs2 : 5'b00000;
 
   assign rs1 = _rs1;
   assign rs2 = _rs2;
-  assign csr = _is_csr ? instr_raw[31:20] : 12'b0;
+  assign csr = (rstn && enabled) && _is_csr ? instr_raw[31:20] : 12'b0;
 
   wire _lui    = (opcode == 7'b0110111);
   wire _auipc  = (opcode == 7'b0010111);

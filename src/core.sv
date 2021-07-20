@@ -153,7 +153,7 @@ module core
   wire [31:0] pred_jump_dest = (bht[pc[7:0]][global_pred][1] && btac[pc[7:0]][55:32] == pc[31:8]) ?
                                btac[pc[7:0]][31:0] : pc + 1;
 
-  wire is_jump_e = (execute_enabled && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
+  wire is_jump_e = ((execute_rstn && execute_enabled) && (instr_de.jal || instr_de.jalr || instr_de.is_conditional_jump));
   wire pred_succeed = (is_jump_e && jump_dest == pc_fd_in);
   wire pred_fail    = (is_jump_e && jump_dest != pc_fd_in);
   wire [31:0] pc_e  = instr_de.pc;
@@ -342,11 +342,11 @@ module core
 
   task set_de_reg;
     begin
-      rs1_de_in      <= (execute_enabled && rs1_addr == instr_de.rd) ?
+      rs1_de_in      <= ((execute_rstn && execute_enabled) && rs1_addr == instr_de.rd) ?
                         rd_ew_out : rs1_data;
-      rs2_de_in      <= (execute_enabled && rs2_addr == instr_de.rd) ?
+      rs2_de_in      <= ((execute_rstn && execute_enabled) && rs2_addr == instr_de.rd) ?
                         rd_ew_out : rs2_data;
-      csr_de_in      <= (execute_enabled && csr_addr == instr_de.imm) ?
+      csr_de_in      <= ((execute_rstn && execute_enabled) && csr_addr == instr_de.imm) ?
                         csrd_ew_out : v_csr_data[31:0];
       is_csr_valid   <= v_csr_data[32:32];
       global_pred_de <= global_pred_fd;
@@ -518,28 +518,28 @@ module core
           set_csr_when_interrupted();
         end
       end else begin // if (state)
-        if (execute_enabled && (instr_de.is_illegal_instr || (instr_de.is_csr && !is_csr_valid))) begin
+        if ((execute_rstn && execute_enabled) && (instr_de.is_illegal_instr || (instr_de.is_csr && !is_csr_valid))) begin
           state <= 1;
           raise_illegal_instr();
           flush_all_stages();
-        end else if (execute_enabled && instr_de.mret) begin
+        end else if ((execute_rstn && execute_enabled) && instr_de.mret) begin
           if (cpu_mode == 2'd3) begin
             state <= 0;
             cpu_mode <= 2'd0;
             set_mstatus_by_mret();
 
-            pc <= (csr_w_enabled && csr_w_addr == 12'h341) ? csr_w_data : csr.mepc;
+            pc <= ((execute_rstn && execute_enabled) && csr_w_addr == 12'h341) ? csr_w_data : csr.mepc;
             flush_stages_when_mret();
           end else begin
             state <= 1;
             raise_illegal_instr();
             flush_all_stages();
           end
-        end else if (execute_enabled && instr_de.ecall) begin
+        end else if ((execute_rstn && execute_enabled) && instr_de.ecall) begin
           state <= 1;
           raise_ecall();
           flush_all_stages();
-        end else if (execute_enabled && instr_de.ebreak) begin
+        end else if ((execute_rstn && execute_enabled) && instr_de.ebreak) begin
           state <= 1;
           raise_ebreak();
           flush_all_stages();
@@ -580,7 +580,7 @@ module core
           set_ew_reg();
         end
 
-        if (cpu_mode == 2'd0 && execute_enabled && !is_interrupted) begin
+        if (cpu_mode == 2'd0 && (execute_rstn && execute_enabled) && !is_interrupted) begin
           pc_when_interrupted <= jump_dest;
         end
       end // if (state)

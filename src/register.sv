@@ -31,12 +31,12 @@ module register
     end
   end
 
-  assign rs1_data = r_enabled ? ((w_enabled && w_addr != 5'b0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr]) : 32'b0;
-  assign rs2_data = r_enabled ? ((w_enabled && w_addr != 5'b0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr]) : 32'b0;
+  assign rs1_data = (rstn && r_enabled) ? ((w_enabled && w_addr != 5'b0 && w_addr == rs1_addr) ? w_data : regs[rs1_addr]) : 32'b0;
+  assign rs2_data = (rstn && r_enabled) ? ((w_enabled && w_addr != 5'b0 && w_addr == rs2_addr) ? w_data : regs[rs2_addr]) : 32'b0;
 
   always @(posedge clk) begin
-    if(rstn) begin
-      if(w_enabled) begin
+    if (rstn) begin
+      if (w_enabled) begin
         regs[w_addr] <= w_data;
       end
     end

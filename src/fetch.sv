@@ -212,7 +212,7 @@ module fetch
   //   32'b11111111100111111111000011101111   // JAL -2(imm) 1(rd)
   // };
 
-  assign instr_raw = enabled ? instr_mem[pc] : 32'b0;
+  assign instr_raw = (rstn && enabled) ? instr_mem[pc] : 32'b0;
 
   always @(posedge clk) begin
     if (rstn) begin

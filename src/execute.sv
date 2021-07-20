@@ -40,12 +40,12 @@ module execute
       .w_enabled(instr.is_store),
       .w_data(rs2) );
 
-  assign rd        = enabled ? (instr.is_load ? r_data :
-                                instr.is_csr ? csr :
-                                alu_rd) : 32'b0;
-  assign csrd      = enabled ? (instr.is_csr ? alu_rd : csr) : 32'b0;
-  assign is_jump   = enabled && (instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1));
-  assign jump_dest = enabled ?
+  assign rd        = (rstn && enabled) ? (instr.is_load ? r_data :
+                                          instr.is_csr ? csr :
+                                          alu_rd) : 32'b0;
+  assign csrd      = (rstn && enabled) ? (instr.is_csr ? alu_rd : csr) : 32'b0;
+  assign is_jump   = (rstn && enabled) && (instr.jal || instr.jalr || (instr.is_conditional_jump && alu_rd == 32'b1));
+  assign jump_dest = (rstn && enabled) ?
                      (instr.jal  ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
                       instr.jalr ? $signed(rs1) + $signed($signed(instr.imm) >>> 2) :
                       instr.is_conditional_jump && alu_rd == 32'b1 ? $signed(instr.pc) + $signed($signed(instr.imm) >>> 2) :
