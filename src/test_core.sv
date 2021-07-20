@@ -5,13 +5,14 @@ module test_core();
   logic clk;
   wire rstn = 1;
   wire [31:0] pc;
-  wire [31:0] rd;
+  logic ext_intr;
+  logic timer_intr;
   wire [31:0] preds [2:0];
   wire [31:0] regs [31:0];
   wire completed;
   int i, r;
 
-  core _core(clk, rstn, pc, rd, preds, regs, completed);
+  core _core(clk, rstn, ext_intr, timer_intr, pc, preds, regs, completed);
 
   initial begin
     // $dumpfile("test_core.vcd");
@@ -21,13 +22,20 @@ module test_core();
     $display("difference message format");
 
     clk = 0;
-    for (i=0; i<8450; i++) begin
+    ext_intr = 0;
+    timer_intr = 0;
+    for (i=0; i<100000; i++) begin
       #10
       clk = ~clk;
+      if (i==1000) begin
+        ext_intr = 1;
+      end
+      if (i==1200) begin
+        ext_intr = 0;
+      end
       if (completed) begin
         $display("iteration: %5d", i);
         $display("pc: %5d", pc);
-        // $display("rd: %3d", $signed(rd));
         $display("prediction: total %4d, succeed %4d, fail %4d", preds[0], preds[1], preds[2]);
         $display("register:");
         for (r=0; r<15; r++) begin
