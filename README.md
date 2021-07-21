@@ -19,7 +19,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 ## Structure
 
 - 4-stage pipeline (`Fetch`, `Decode`, `Execute`, `Write)`
-- Forwarding (`E -> D`, `W -> D`)
+- Forwarding (`E &rarr; D`, `W &rarr; D`)
 - Branch prediction (`Two-level adaptive predictor`)
 - Register (32 entries, 32 bit)
 - Memory (1024 entries, 32 bit)
@@ -249,13 +249,13 @@ If you want to run your `original test program`, you should follow 1 to 3.
 2. Simulation in Vivado
 	- Start Vivado
 	- Create Project
-		- `Create a New Vivado Project` -> `Next >`
-		- `Project Name` -> Set any `Project Name` and `Project location` -> `Next >`
-		- `Project Type` -> `RTL Project` (Default) -> `Next >`
-		- `Add Sources` -> Add all `.sv` files in [src](./src) (including [test_core.sv](./src/test_core.sv)) -> `Next >`
-		- `Add Constraints (optional)` -> `Next >`
-		- `Default Part` -> `Next >`
-		- `New Project Summary` -> `Finish`
+		- `Create a New Vivado Project` &rarr; `Next >`
+		- `Project Name` &rarr; Set any `Project Name` and `Project location` &rarr; `Next >`
+		- `Project Type` &rarr; `RTL Project` (Default) &rarr; `Next >`
+		- `Add Sources` &rarr; Add all `.sv` files in [src](./src) (including [test_core.sv](./src/test_core.sv)) &rarr; `Next >`
+		- `Add Constraints (optional)` &rarr; `Next >`
+		- `Default Part` &rarr; `Next >`
+		- `New Project Summary` &rarr; `Finish`
 	- Run Simulation
 		- `Flow Navigator` > `PROJECT MANAGER` > `SIMULATION` > `Run Simulation` > `Run Behavioral Simulation`
 		- Click `Yes` or `Save`, if there are any pop-ups
@@ -264,7 +264,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 			- `wire` and `reg` in the module appear in `Objects` tab
 			- Choose `wire` or `reg` in `Objects` tab
 			- Drag and drop it on `Name` in the wave form area
-		- `Run All` (&#9654;) in the top bar
+		- `Run All` &#9654; in the top bar
 		- Check the wave form
 
 	After updating source codes, you have to follow `Run Simulation` again.
