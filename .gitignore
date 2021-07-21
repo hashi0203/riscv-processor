@@ -8,4 +8,4 @@ log
 *.bin
 *.o
 *.elf
-project_1
+project_*
