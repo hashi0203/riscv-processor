@@ -56,7 +56,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 	- `r15 = fib(10)`
 
 	```
-	clocks       : 18614
+	clocks       : 18613
 	pc           :    43
 	instructions : total 14587, normal   3809, exception   709, others 10069
 	prediction   : total  1344, succeed  1130, fail        214
@@ -73,7 +73,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 	- `r15 = fib(10)`
 
 	```
-	clocks       :  9387
+	clocks       :  9385
 	pc           :    43
 	instructions : total  5267, normal   3809, exception   709, others   749
 	prediction   : total   622, succeed   416, fail        206
@@ -171,10 +171,10 @@ If you want to run your `original test program`, you should follow 1 to 3.
 2. Change the test program for processor.
 	- Update instruction memory (`instr_mem`) in [fetch.sv](./src/fetch.sv).
 		- Make sure to change `63` in line 14 to `the number of lines - 1`.
-	- Update `final_pc` (line 20) and `privilege_jump_addr` (line 21) in [core.sv](./src/core.sv).
-		- If you don't expect exception or interruption, you don't have to set `privilege_jump_addr`.
-	- Set `max_itr`, `ext_intr` and `timer_intr` in [test_core.sv](./src/test_core.sv).
-		- If `max_itr` is small, the program may not finish.
+	- Update `final_pc`, `privilege_jump_addr`, `exception_enabled`, and `interrupt_enabled` in [core.sv](./src/core.sv).
+		- If you don't expect exception or interruption, you don't have to set `privilege_jump_addr`, and you have to set `exception_enabled`, and `interrupt_enabled` to zero.
+	- Set `max_clocks`, `max_reg_show`, `ext_intr` and `timer_intr` in [test_core.sv](./src/test_core.sv).
+		- If `max_clocks` is small, the program may not finish.
 		- If you don't expect external or timer interruption, you don't have to set `ext_intr` and `timer_intr`.
 
 3. Run the processor.
