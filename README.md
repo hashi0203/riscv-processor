@@ -19,7 +19,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 ## Structure
 
 - 4-stage pipeline (`Fetch`, `Decode`, `Execute`, `Write)`
-- Forwarding (`E &rarr; D`, `W &rarr; D`)
+- Forwarding (`E → D`, `W → D`)
 - Branch prediction (`Two-level adaptive predictor`)
 - Register (32 entries, 32 bit)
 - Memory (1024 entries, 32 bit)
@@ -264,7 +264,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 			- `wire` and `reg` in the module appear in `Objects` tab
 			- Choose `wire` or `reg` in `Objects` tab
 			- Drag and drop it on `Name` in the wave form area
-		- `Run All` &#9654; in the top bar
+		- Top bar > `Run All` &#9654;
 		- Check the wave form
 
 	After updating source codes, you have to follow `Run Simulation` again.
