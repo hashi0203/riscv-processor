@@ -67,8 +67,8 @@ module core
   decode _decode
     ( .clk(clk),
       .rstn(rstn & decode_rstn),
-      .pc(pc_fd_in),
       .enabled(decode_enabled),
+      .pc(pc_fd_in),
       .instr_raw(instr_fd_in),
 
       .instr(instr_de),
@@ -301,8 +301,8 @@ module core
   task set_csr_when_exception;
     begin
       csr.mcause  <= {28'b0, exception_code};
-      csr.mepc    <= pc_when_exception;
-      // csr.mepc    <= pc_when_exception + 1; // fib-ebreak
+      // csr.mepc    <= pc_when_exception;
+      csr.mepc    <= pc_when_exception + 1; // fib-ebreak
       csr.mtval   <= exception_tval;
       set_mstatus_by_trap();
     end

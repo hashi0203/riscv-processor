@@ -14,56 +14,57 @@ module test_core();
   wire [31:0] regs   [31:0];
   wire        completed;
 
-  int max_itr      = 100000;
+  int max_clocks   = 100000;
   int max_reg_show = 15;
-  int i, r;
+  int i, j, r;
 
   core _core(clk, rstn, ext_intr, timer_intr, pc, instrs, preds, regs, completed);
 
   initial begin
-    // $dumpfile("test_core.vcd");
-    // $dumpvars(0);
-
     $display("############### start of checking module core ###############");
 
     clk = 0;
     ext_intr = 0;
     timer_intr = 0;
-    for (i = 0; i < max_itr; i++) begin
-      #10
-      clk = ~clk;
+    for (i = 1; i <= max_clocks; i++) begin
 
-      if (i==1000) begin
+      if (i==500) begin
         ext_intr = 1;
       end
-      if (i==1200) begin
+      if (i==600) begin
         ext_intr = 0;
       end
 
-      if (i==10000) begin
+      if (i==5000) begin
         timer_intr = 1;
       end
-      if (i==10200) begin
+      if (i==5100) begin
         timer_intr = 0;
       end
 
+      for (j = 0; j < 2; j++) begin
+        #10
+        clk = ~clk;
+      end
+
       if (completed) begin
-        $display("clocks       : %5d", (i >> 1)+1);
-        $display("pc           : %5d", pc);
-        $display("instructions : total %5d, normal  %5d, exception %5d, others %5d", instrs[0], instrs[1], instrs[2], instrs[3]);
-        $display("prediction   : total %5d, succeed %5d, fail      %5d",  preds[0],  preds[1],  preds[2]);
-        $display("register     :");
-        for (r = 0; r < max_reg_show; r++) begin
-          if (r % 4 == 3) begin
-            $display("    r%02d: %4d,", r, $signed(regs[r]));
-          end else begin
-            $write("    r%02d: %4d,", r, $signed(regs[r]));
-          end
-        end
-        $display("    r%02d: %4d", r, $signed(regs[r]));
         break;
       end
     end
+
+    $display("clocks       : %5d", i);
+    $display("pc           : %5d", pc);
+    $display("instructions : total %5d, normal  %5d, exception %5d, others %5d", instrs[0], instrs[1], instrs[2], instrs[3]);
+    $display("prediction   : total %5d, succeed %5d, fail      %5d",  preds[0],  preds[1],  preds[2]);
+    $display("register     :");
+    for (r = 0; r < max_reg_show; r++) begin
+      if (r % 4 == 3) begin
+        $display("    r%02d: %4d,", r, $signed(regs[r]));
+      end else begin
+        $write("    r%02d: %4d,", r, $signed(regs[r]));
+      end
+    end
+    $display("    r%02d: %4d", r, $signed(regs[r]));
 
     $display("################# end of checking module core ###############");
     $finish;

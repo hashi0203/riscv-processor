@@ -4,8 +4,8 @@
 module decode
   ( input  wire         clk,
     input  wire         rstn,
-    input  wire [31:0]  pc,
     input  wire         enabled,
+    input  wire [31:0]  pc,
     input  wire [31:0]  instr_raw,
 
     output instructions instr,
