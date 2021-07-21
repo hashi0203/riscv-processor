@@ -18,6 +18,8 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 
 ## Structure
 
+![processor](./img/processor.png)
+
 - 4-stage pipeline (`Fetch`, `Decode`, `Execute`, `Write)`
 - Forwarding (`E → D`, `W → D`)
 - Branch prediction (`Two-level adaptive predictor`)
@@ -135,7 +137,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 	If you want to run your `original test program`, you should follow this process.
 
 	We use [riscv-gnu-toolchain](https://github.com/riscv/riscv-gnu-toolchain) as a cross compiler.<br>
-	Basically, you can follow the instructions in the GitHub.
+	Basically, you can follow the instructions on the GitHub page.
 
 	```bash
 	$ git clone https://github.com/riscv/riscv-gnu-toolchain
@@ -168,7 +170,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 
 	- Output files are explained later in [Files in test-programs](#files-in-test-programs) chapter.
 
-2. Change the test program for processor.
+2. Change the test program for the processor.
 	- Update instruction memory (`instr_mem`) in [fetch.sv](./src/fetch.sv).
 		- Make sure to change `63` in line 14 to `the number of lines - 1`.
 	- Update `final_pc`, `privilege_jump_addr`, `exception_enabled`, and `interrupt_enabled` in [core.sv](./src/core.sv).
@@ -194,7 +196,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 
 	When you make test programs, you can also write or edit RISC-V assembly code.<br>
 	For example, [fib-ebreak.S](./test-programs/fib-ebreak.S) and [fib-csr.S](./test-programs/fib-csr.S) are obtained by editing [fib.S](./test-programs/fib.S).<br>
-	When editing assemblies, you have to make sure that edited part should be `above` the following three lines.
+	When editing assemblies, you have to make sure that the edited part should be `above` the following three lines.
 
 	```
 		.size	main, .-main
@@ -263,9 +265,9 @@ If you want to run your `original test program`, you should follow 1 to 3.
 			- Choose modules (e.g., `_core`) in `Scope` tab
 			- `wire` and `reg` in the module appear in `Objects` tab
 			- Choose `wire` or `reg` in `Objects` tab
-			- Drag and drop it on `Name` in the wave form area
+			- Drag and drop it on `Name` in the wave orm area
 		- Top bar > `Run All` &#9654;
-		- Check the wave form
+		- Check the waveform
 
 	After updating source codes, you have to follow `Run Simulation` again.
 
@@ -286,13 +288,13 @@ If you want to run your `original test program`, you should follow 1 to 3.
 - [分岐先アドレスを予測する](https://news.mynavi.jp/article/architecture-174/)
 	- to see how to implement branch prediction.
 - [cpuex2019-7th/core](https://github.com/cpuex2019-7th/core)
-	- to see how to implement processor.
+	- to see how to implement a processor.
 - [RISC-Vの特権命令まとめ](https://msyksphinz.hatenablog.com/entry/advent20161205)
 	- to see how the CSR instructions work.
 - [RISC-VでLinuxを動かすためのレジスタ制御](https://www.aps-web.jp/academy/risc-v/584/)
 	- to see how the CSR instructions work.
 - [RISC-Vにおけるprivilege modeの遷移(xv6-riscvを例にして)](https://cstmize.hatenablog.jp/entry/2019/09/26/RISC-V%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bprivilege_mode%E3%81%AE%E9%81%B7%E7%A7%BB%28xv6-riscv%E3%82%92%E4%BE%8B%E3%81%AB%E3%81%97%E3%81%A6%29#fn:21)
-	- to see how to handle exception and interrupt.
+	- to see how to handle exceptions and interrupts.
 - [RISC-Vとx86のsystem callの内部実装の違い(xv6を例に)](https://cstmize.hatenablog.jp/entry/2019/10/01/RISC-V%E3%81%A8x86%E3%81%AEsystem_call%E3%81%AE%E5%86%85%E9%83%A8%E5%AE%9F%E8%A3%85%E3%81%AE%E9%81%95%E3%81%84%28xv6%E3%82%92%E4%BE%8B%E3%81%AB%29)
 	-	to see the behavior of system call instructions.
 - [xv6-riscv](https://github.com/mit-pdos/xv6-riscv) (simple OS)
