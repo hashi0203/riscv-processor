@@ -301,8 +301,8 @@ module core
   task set_csr_when_exception;
     begin
       csr.mcause  <= {28'b0, exception_code};
-      // csr.mepc    <= pc_when_exception;
-      csr.mepc    <= pc_when_exception + 1; // fib-ebreak
+      csr.mepc    <= pc_when_exception;
+      // csr.mepc    <= pc_when_exception + 1; // fib-ebreak
       csr.mtval   <= exception_tval;
       set_mstatus_by_trap();
     end
