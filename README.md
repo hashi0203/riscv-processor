@@ -293,7 +293,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 	- to see how the CSR instructions work.
 - [RISC-VでLinuxを動かすためのレジスタ制御](https://www.aps-web.jp/academy/risc-v/584/)
 	- to see how the CSR instructions work.
-- [RISC-Vにおけるprivilege modeの遷移(xv6-riscvを例にして)](https://cstmize.hatenablog.jp/entry/2019/09/26/RISC-V%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bprivilege_mode%E3%81%AE%E9%81%B7%E7%A7%BB%28xv6-riscv%E3%82%92%E4%BE%8B%E3%81%AB%E3%81%97%E3%81%A6%29#fn:21)
+- [RISC-Vにおけるprivilege modeの遷移(xv6-riscvを例にして)](https://cstmize.hatenablog.jp/entry/2019/09/26/RISC-V%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bprivilege_mode%E3%81%AE%E9%81%B7%E7%A7%BB%28xv6-riscv%E3%82%92%E4%BE%8B%E3%81%AB%E3%81%97%E3%81%A6%29)
 	- to see how to handle exceptions and interrupts.
 - [RISC-Vとx86のsystem callの内部実装の違い(xv6を例に)](https://cstmize.hatenablog.jp/entry/2019/10/01/RISC-V%E3%81%A8x86%E3%81%AEsystem_call%E3%81%AE%E5%86%85%E9%83%A8%E5%AE%9F%E8%A3%85%E3%81%AE%E9%81%95%E3%81%84%28xv6%E3%82%92%E4%BE%8B%E3%81%AB%29)
 	-	to see the behavior of system call instructions.
