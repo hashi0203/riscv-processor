@@ -54,7 +54,7 @@ Privileged Instructions are based on "[Volume 2, Privileged Spec v. 20190608](ht
 
 1. `fib-csr`
 
-	- fib function with exceptions, interrupts, and CSR operations
+	- fib function with all exceptions, all interrupts, and CSR operations
 	- `r15 = fib(10)`
 
 	```
