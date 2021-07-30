@@ -5,7 +5,6 @@ LD := riscv32-unknown-linux-gnu-ld
 OBJCOPY := riscv32-unknown-linux-gnu-objcopy
 OBJDUMP := riscv32-unknown-linux-gnu-objdump
 CFLAGS := -march=rv32ima -c
-LINK := -L/home/nhsmt1123/opt/riscv32/riscv32-unknown-gnu/lib
 
 main: $(ARG).hex $(ARG).dump
 	./hex2bin.sh $(ARG).hex > $(ARG).b
@@ -17,7 +16,7 @@ $(ARG).bin: $(ARG).elf
 	$(OBJCOPY) -O binary $(ARG).elf $(ARG).bin
 
 $(ARG).elf: $(ARG).o start.o
-	$(LD) $(ARG).o start.o $(LINK) -Tlink.ld -nostartfiles -static -o $(ARG).elf
+	$(LD) $(ARG).o start.o -Tlink.ld -nostartfiles -static -o $(ARG).elf
 
 start.o: start.S
 	$(CC) $(CFLAGS) -o start.o start.S
