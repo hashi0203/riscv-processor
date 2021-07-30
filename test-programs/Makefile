@@ -1,5 +1,3 @@
-# https://kivantium.hateblo.jp/entry/2020/07/24/225016
-
 CC := riscv32-unknown-linux-gnu-gcc
 LD := riscv32-unknown-linux-gnu-ld
 OBJCOPY := riscv32-unknown-linux-gnu-objcopy

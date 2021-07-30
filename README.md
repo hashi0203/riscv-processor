@@ -204,7 +204,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 		.section	.note.GNU-stack,"",@progbits
 	```
 
-	After creating test programs in assembly, edit the [Makefile](./test-programs/Makefile) by commenting out line 28 and 29.
+	After creating test programs in assembly, edit the [Makefile](./test-programs/Makefile) by commenting out line 25 and 26.
 
 	```
 	# $(ARG).S: $(ARG).c
