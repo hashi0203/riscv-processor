@@ -10,7 +10,7 @@ main: $(ARG).hex $(ARG).dump
 	./hex2bin.sh $(ARG).hex > $(ARG).b
 
 $(ARG).hex: $(ARG).bin
-	hexdump -v -e '1/4 "%08X" "\n"' $(ARG).bin > $(ARG).hex
+	hexdump -v -e '/4 "%08X" "\n"' $(ARG).bin > $(ARG).hex
 
 $(ARG).bin: $(ARG).elf
 	$(OBJCOPY) -O binary $(ARG).elf $(ARG).bin
