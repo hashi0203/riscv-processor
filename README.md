@@ -173,7 +173,7 @@ If you want to run your `original test program`, you should follow 1 to 3.
 2. Change the test program for the processor.
 	- Update instruction memory (`instr_mem`) in [fetch.sv](./src/fetch.sv).
 		- Make sure to change `63` in line 14 to `the number of lines - 1`.
-	- Update `final_pc`, `privilege_jump_addr`, `exception_enabled`, and `interrupt_enabled` in [core.sv](./src/core.sv).
+	- Update `MEM_SIZE`, `final_pc`, `privilege_jump_addr`, `exception_enabled`, and `interrupt_enabled` in [core.sv](./src/core.sv).
 		- If you don't expect exception or interruption, you don't have to set `privilege_jump_addr`, and you have to set `exception_enabled`, and `interrupt_enabled` to zero.
 	- Set `max_clocks`, `max_reg_show`, `ext_intr` and `timer_intr` in [test_core.sv](./src/test_core.sv).
 		- If `max_clocks` is small, the program may not finish.

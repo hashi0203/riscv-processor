@@ -1,5 +1,4 @@
 `default_nettype none
-`include "def.sv"
 
 module fetch
   ( input  wire        clk,

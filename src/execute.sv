@@ -1,7 +1,7 @@
 `default_nettype none
 `include "def.sv"
 
-module execute
+module execute #(parameter MEM_SIZE = 32'd1024)
   ( input  wire         clk,
     input  wire         rstn,
 
@@ -29,7 +29,7 @@ module execute
       .rd_data(alu_rd_data) );
 
   wire [31:0] r_data;
-  memory _memory
+  memory #(.MEM_SIZE(MEM_SIZE)) _memory
     ( .clk(clk),
       .rstn(rstn),
       .base(rs1_data),

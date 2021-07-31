@@ -1,7 +1,6 @@
 `default_nettype none
-`include "def.sv"
 
-module register
+module register #(parameter MEM_SIZE = 32'd1024)
   ( input  wire        clk,
     input  wire        rstn,
     input  wire        r_enabled,
@@ -24,7 +23,7 @@ module register
   initial begin
     for (i=0; i<32; i++) begin
       if (i == 2) begin
-        regs[2] <= 32'd2048;
+        regs[2] <= MEM_SIZE << 1;
       end else begin
         regs[i] <= 0;
       end

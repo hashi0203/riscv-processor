@@ -14,6 +14,8 @@ module core
     output reg [31:0] regs   [31:0],
     output reg        completed );
 
+  parameter MEM_SIZE = 32'd1024;
+
   reg [31:0] pc;
   reg        state;    // 0: default, 1: trap (exception, interrupt)
   reg [1:0]  cpu_mode; // 0: user, 3: machine
@@ -90,7 +92,7 @@ module core
   wire         is_jump;
   wire [31:0]  jump_dest;
 
-  execute _execute
+  execute #(.MEM_SIZE(MEM_SIZE)) _execute
     ( .clk(clk),
       .rstn(rstn & execute_rstn),
 
@@ -139,7 +141,7 @@ module core
   wire [31:0] rs1_data;
   wire [31:0] rs2_data;
 
-  register _register
+  register #(.MEM_SIZE(MEM_SIZE)) _register
     ( .clk(clk),
       .rstn(rstn),
       .r_enabled(decode_enabled),
@@ -195,9 +197,8 @@ module core
       csr.mip_mask     <= {20'b0, 4'b1000, 4'b1000, 4'b0000};
 
       csr.mstatus  <= 32'b0;
-      // csr.mie      <= 32'b0;
-      csr.mie      <= {20'b0, 4'b1010, 4'b1010, 4'b1010};
-      // csr.mtvec    <= 32'b0;
+      csr.mie      <= interrupt_enabled ?
+                      {20'b0, 4'b1010, 4'b1010, 4'b1010} : 32'b0;
       csr.mtvec    <= {privilege_jump_addr, 2'b0};
       csr.mepc     <= 32'b0;
       csr.mcause   <= 32'b0;
@@ -380,7 +381,7 @@ module core
   task flush_fd_reg;
     begin
       pc_fd_in       <= 32'b0;
-      instr_fd_in    <= '{ default:0 };
+      instr_fd_in    <= 32'b0;
       global_pred_fd <= 2'b0;
     end
   endtask
@@ -579,7 +580,7 @@ module core
 
           instrs[0] <= instrs[0] + 1;
           instrs[2] <= instrs[2] + 1;
-        end else if (interrupt_enabled && is_interrupted) begin
+        end else if (is_interrupted) begin
           state <= 1;
           flush_all_stages();
 

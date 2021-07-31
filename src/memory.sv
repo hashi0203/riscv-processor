@@ -1,7 +1,7 @@
 `default_nettype none
 `include "def.sv"
 
-module memory
+module memory #(parameter MEM_SIZE = 32'd1024)
   ( input  wire        clk,
     input  wire        rstn,
     input  wire [31:0] base,
@@ -12,14 +12,14 @@ module memory
     input  wire        w_enabled,
     input  wire [31:0] w_data );
 
-  reg  [31:0] mem [0:1023];
+  reg  [31:0] mem [0:MEM_SIZE-1];
   wire [31:0] addr = $signed(($signed(base) + $signed(offset))) >>> 2;
 
   assign r_data = (rstn && r_enabled) ? mem[addr] : 32'b0;
 
   integer i;
   initial begin
-    for (i=0; i<1024; i++) begin
+    for (i=0; i<MEM_SIZE; i++) begin
       mem[i] <= 0;
     end
   end
